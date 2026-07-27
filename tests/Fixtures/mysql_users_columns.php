@@ -1,0 +1,78 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    (object) [
+        'name' => 'id',
+        'type' => 'bigint',
+        'length_value' => null,
+        'nullable_value' => 'NO',
+        'column_key' => 'PRI',
+        'extra_value' => 'auto_increment',
+        'default_value' => null,
+    ],
+    (object) [
+        'name' => 'name',
+        'type' => 'varchar',
+        'length_value' => 255,
+        'nullable_value' => 'NO',
+        'column_key' => '',
+        'extra_value' => '',
+        'default_value' => null,
+    ],
+    (object) [
+        'name' => 'email',
+        'type' => 'varchar',
+        'length_value' => 255,
+        'nullable_value' => 'NO',
+        'column_key' => 'UNI',
+        'extra_value' => '',
+        'default_value' => null,
+    ],
+    (object) [
+        'name' => 'password',
+        'type' => 'varchar',
+        'length_value' => 255,
+        'nullable_value' => 'NO',
+        'column_key' => '',
+        'extra_value' => '',
+        'default_value' => null,
+    ],
+    (object) [
+        'name' => 'is_active',
+        'type' => 'tinyint',
+        'length_value' => null,
+        'nullable_value' => 'NO',
+        'column_key' => '',
+        'extra_value' => '',
+        'default_value' => '1',
+    ],
+    (object) [
+        'name' => 'created_at',
+        'type' => 'timestamp',
+        'length_value' => null,
+        'nullable_value' => 'YES',
+        'column_key' => '',
+        'extra_value' => '',
+        'default_value' => null,
+    ],
+    (object) [
+        'name' => 'updated_at',
+        'type' => 'timestamp',
+        'length_value' => null,
+        'nullable_value' => 'YES',
+        'column_key' => '',
+        'extra_value' => '',
+        'default_value' => null,
+    ],
+    (object) [
+        'name' => 'deleted_at',
+        'type' => 'timestamp',
+        'length_value' => null,
+        'nullable_value' => 'YES',
+        'column_key' => '',
+        'extra_value' => '',
+        'default_value' => null,
+    ],
+];
