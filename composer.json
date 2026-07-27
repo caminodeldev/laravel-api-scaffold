@@ -3,6 +3,7 @@
   "description": "Generate clean, secure and configurable Laravel APIs from database tables.",
   "type": "library",
   "license": "MIT",
+  "homepage": "https://github.com/caminodeldev/laravel-api-scaffold",
   "keywords": [
     "laravel",
     "api",
@@ -10,7 +11,9 @@
     "generator",
     "artisan",
     "eloquent",
-    "crud",
+    "form-request",
+    "api-resource",
+    "mysql",
     "security"
   ],
   "authors": [
@@ -20,10 +23,13 @@
       "role": "Creator and maintainer"
     }
   ],
+  "support": {
+    "issues": "https://github.com/caminodeldev/laravel-api-scaffold/issues",
+    "source": "https://github.com/caminodeldev/laravel-api-scaffold"
+  },
   "require": {
     "php": "^8.2",
     "illuminate/console": "^10.0|^11.0|^12.0",
-    "illuminate/contracts": "^10.0|^11.0|^12.0",
     "illuminate/database": "^10.0|^11.0|^12.0",
     "illuminate/filesystem": "^10.0|^11.0|^12.0",
     "illuminate/support": "^10.0|^11.0|^12.0"
@@ -47,12 +53,18 @@
       "providers": [
         "CaminoDelDev\\LaravelApiScaffold\\ApiScaffoldServiceProvider"
       ]
+    },
+    "branch-alias": {
+      "dev-main": "0.1.x-dev"
     }
   },
   "minimum-stability": "stable",
   "prefer-stable": true,
+  "config": {
+    "sort-packages": true
+  },
   "scripts": {
-    "test": "vendor/bin/phpunit",
-    "analyse": "composer validate --strict"
+    "test": "vendor/bin/phpunit --colors=always",
+    "validate": "composer validate --strict"
   }
 }

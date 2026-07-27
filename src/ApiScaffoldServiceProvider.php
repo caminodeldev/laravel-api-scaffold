@@ -11,26 +11,32 @@ use Illuminate\Support\ServiceProvider;
 
 class ApiScaffoldServiceProvider extends ServiceProvider
 {
+    private const CONFIG_KEY = 'api-scaffold';
+
+    private const CONFIG_TAG = 'api-scaffold-config';
+
     public function register(): void
     {
         $this->mergeConfigFrom(
             __DIR__ . '/../config/api-scaffold.php',
-            'api-scaffold'
+            self::CONFIG_KEY
         );
     }
 
     public function boot(): void
     {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
         $this->publishes([
             __DIR__ . '/../config/api-scaffold.php' => config_path('api-scaffold.php'),
-        ], 'api-scaffold-config');
+        ], self::CONFIG_TAG);
 
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                ScaffoldApiCommand::class,
-                ScaffoldInspectCommand::class,
-                ScaffoldModelCommand::class,
-            ]);
-        }
+        $this->commands([
+            ScaffoldApiCommand::class,
+            ScaffoldInspectCommand::class,
+            ScaffoldModelCommand::class,
+        ]);
     }
 }
