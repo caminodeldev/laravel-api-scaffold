@@ -35,7 +35,12 @@ final readonly class FileWriter
         return $path;
     }
 
-    public function appendOnce(string $path, string $needle, string $contents, bool $dryRun = false): bool
+    /**
+     * Appends content to a file only when none of the provided needles already exist.
+     *
+     * @param string|array<int, string> $needles
+     */
+    public function appendOnce(string $path, string|array $needles, string $contents, bool $dryRun = false): bool
     {
         if ($dryRun) {
             return true;
@@ -47,11 +52,13 @@ final readonly class FileWriter
 
         $current = $this->files->get($path);
 
-        if (str_contains($current, $needle)) {
-            return false;
+        foreach ((array) $needles as $needle) {
+            if ($needle !== '' && str_contains($current, $needle)) {
+                return false;
+            }
         }
 
-        $this->files->append($path, PHP_EOL . $contents . PHP_EOL);
+        $this->files->append($path, PHP_EOL . rtrim($contents) . PHP_EOL);
 
         return true;
     }

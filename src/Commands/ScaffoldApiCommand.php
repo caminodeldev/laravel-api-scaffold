@@ -18,6 +18,10 @@ use Illuminate\Console\Command;
 
 class ScaffoldApiCommand extends Command
 {
+    private const ROUTE_IMPORT_START_MARKER = '// <laravel-api-scaffold routes>';
+
+    private const ROUTE_IMPORT_END_MARKER = '// </laravel-api-scaffold routes>';
+
     protected $signature = 'scaffold:api
                             {table : Database table name}
                             {--connection= : Database connection name}
@@ -153,11 +157,66 @@ class ScaffoldApiCommand extends Command
     private function ensureApiRoutesImport(FileWriter $fileWriter, bool $dryRun): void
     {
         $apiRoutePath = base_path('routes/api.php');
-        $import = "if (file_exists(__DIR__ . '/scaffolded-api.php')) {\n    require __DIR__ . '/scaffolded-api.php';\n}";
-        $needle = "scaffolded-api.php";
+        $routeFile = (string) config('api-scaffold.routes.file', base_path('routes/scaffolded-api.php'));
+        $relativeRoutePath = $this->relativeRoutePath($apiRoutePath, $routeFile);
+        $escapedRelativeRoutePath = str_replace("'", "\\'", $relativeRoutePath);
 
-        $fileWriter->appendOnce($apiRoutePath, $needle, $import, $dryRun);
+        $import = implode(PHP_EOL, [
+            self::ROUTE_IMPORT_START_MARKER,
+            "if (file_exists(__DIR__ . '/{$escapedRelativeRoutePath}')) {",
+            "    require __DIR__ . '/{$escapedRelativeRoutePath}';",
+            '}',
+            self::ROUTE_IMPORT_END_MARKER,
+        ]);
+
+        $fileWriter->appendOnce(
+            $apiRoutePath,
+            [
+                self::ROUTE_IMPORT_START_MARKER,
+                "require __DIR__ . '/{$escapedRelativeRoutePath}';",
+            ],
+            $import,
+            $dryRun
+        );
 
         $this->info(($dryRun ? 'Would ensure import in' : 'Ensured import in') . ": {$apiRoutePath}");
+    }
+
+    private function relativeRoutePath(string $apiRoutePath, string $routeFile): string
+    {
+        $apiRoutesDirectory = dirname($apiRoutePath);
+
+        return $this->makeRelativePath($apiRoutesDirectory, $routeFile);
+    }
+
+    private function makeRelativePath(string $fromDirectory, string $toPath): string
+    {
+        $fromParts = $this->pathParts($fromDirectory);
+        $toParts = $this->pathParts($toPath);
+
+        while ($fromParts !== [] && $toParts !== [] && $fromParts[0] === $toParts[0]) {
+            array_shift($fromParts);
+            array_shift($toParts);
+        }
+
+        $relativeParts = array_merge(
+            array_fill(0, count($fromParts), '..'),
+            $toParts
+        );
+
+        return implode('/', $relativeParts);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function pathParts(string $path): array
+    {
+        $normalizedPath = str_replace('\\', '/', $path);
+
+        return array_values(array_filter(
+            explode('/', trim($normalizedPath, '/')),
+            static fn (string $part): bool => $part !== ''
+        ));
     }
 }
