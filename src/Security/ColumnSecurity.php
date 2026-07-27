@@ -62,7 +62,7 @@ final class ColumnSecurity
     {
         return array_values(array_filter(
             $columns,
-            fn (ColumnDefinition $column): bool => ! $this->isSensitive($column->name)
+            fn (ColumnDefinition $column): bool => ! $this->shouldHide($column->name)
         ));
     }
 
@@ -104,9 +104,11 @@ final class ColumnSecurity
 
     private function normalizeColumnName(string $column): string
     {
-        $snakeCase = (string) preg_replace('/(?<!^)[A-Z]/', '_$0', $column);
-        $normalized = strtolower($snakeCase);
-        $normalized = (string) preg_replace('/[^a-z0-9]+/', '_', $normalized);
+        $normalized = (string) preg_replace('/[^A-Za-z0-9]+/', '_', $column);
+        $normalized = (string) preg_replace('/([A-Z]+)([A-Z][a-z])/', '$1_$2', $normalized);
+        $normalized = (string) preg_replace('/([a-z0-9])([A-Z])/', '$1_$2', $normalized);
+        $normalized = strtolower($normalized);
+        $normalized = (string) preg_replace('/_+/', '_', $normalized);
 
         return trim($normalized, '_');
     }

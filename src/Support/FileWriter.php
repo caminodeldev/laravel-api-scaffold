@@ -46,6 +46,12 @@ final readonly class FileWriter
             return true;
         }
 
+        $directory = dirname($path);
+
+        if (! $this->files->isDirectory($directory)) {
+            $this->files->makeDirectory($directory, 0755, true);
+        }
+
         if (! $this->files->exists($path)) {
             $this->files->put($path, "<?php\n\n");
         }
