@@ -4,6 +4,18 @@ Generate clean, secure and configurable Laravel API scaffolding from database ta
 
 > This package generates reviewable Laravel code. It does not replace authorization design, business rules, human review, tests, or production readiness checks.
 
+## Release status
+
+Current prepared release:
+
+```text
+v0.1.0
+```
+
+This release focuses on a safe MySQL read-only API scaffold, with explicit opt-in flags for write and delete operations.
+
+See [`CHANGELOG.md`](CHANGELOG.md) for release notes.
+
 ## Requirements
 
 - PHP 8.2 or higher.
@@ -258,13 +270,28 @@ Current MVP scope:
 - Dry-run mode.
 - Explicit CRUD generation flags.
 
-Planned next steps:
+Planned next steps after `v0.1.0`:
 
-- Stronger security documentation.
-- GitHub Actions workflow.
 - PostgreSQL support.
 - Optional policy generation.
 - Real diff mode.
+- Stronger generated Feature tests for CRUD flows.
+- Optional extraction of the response envelope into a dedicated package.
+
+## Versioning
+
+Releases are created with Git tags. The package does not define a hardcoded `version` field in `composer.json`; Packagist and Composer resolve versions from repository tags.
+
+Recommended first release tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+## Distribution archive
+
+The package includes a `.gitattributes` file to keep development-only files out of Composer distribution archives.
 
 ## License
 
