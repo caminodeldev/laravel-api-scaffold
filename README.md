@@ -214,6 +214,35 @@ You can customize them for your organization:
 ],
 ```
 
+## Security defaults and production readiness
+
+Security is the main design constraint of this package. The scaffold is intentionally conservative and is meant to generate reviewable code, not production-ready authorization decisions.
+
+Read the full security notes in [`SECURITY.md`](SECURITY.md).
+
+Safe defaults included in the MVP:
+
+- Read-only APIs are the recommended default.
+- Write operations require `--crud`.
+- Delete generation requires both `--crud` and `--with-delete`.
+- Generated resources exclude common secret-like columns.
+- Generated models exclude common secret-like columns from `$fillable`.
+- Generated controllers return controlled error messages.
+- Generated routes use configurable middleware.
+- `--dry-run` lets you inspect planned files before writing.
+
+Before using generated code in production, review at least:
+
+- Authentication middleware.
+- Authorization rules or policies.
+- Generated FormRequest rules.
+- Generated Resource fields.
+- Search and filter behavior.
+- Write operations and mass-assignment rules.
+- Logs and exception handling.
+- Database indexes and pagination limits.
+
+
 ## MVP status
 
 Current MVP scope:
