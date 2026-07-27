@@ -1,0 +1,58 @@
+{
+  "name": "caminodeldev/laravel-api-scaffold",
+  "description": "Generate clean, secure and configurable Laravel APIs from database tables.",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "laravel",
+    "api",
+    "scaffold",
+    "generator",
+    "artisan",
+    "eloquent",
+    "crud",
+    "security"
+  ],
+  "authors": [
+    {
+      "name": "Ricardo Jofré",
+      "homepage": "https://github.com/rjofres",
+      "role": "Creator and maintainer"
+    }
+  ],
+  "require": {
+    "php": "^8.2",
+    "illuminate/console": "^10.0|^11.0|^12.0",
+    "illuminate/contracts": "^10.0|^11.0|^12.0",
+    "illuminate/database": "^10.0|^11.0|^12.0",
+    "illuminate/filesystem": "^10.0|^11.0|^12.0",
+    "illuminate/support": "^10.0|^11.0|^12.0"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^8.0|^9.0|^10.0",
+    "phpunit/phpunit": "^10.0|^11.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "CaminoDelDev\\LaravelApiScaffold\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "CaminoDelDev\\LaravelApiScaffold\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "CaminoDelDev\\LaravelApiScaffold\\ApiScaffoldServiceProvider"
+      ]
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "scripts": {
+    "test": "vendor/bin/phpunit",
+    "analyse": "composer validate --strict"
+  }
+}

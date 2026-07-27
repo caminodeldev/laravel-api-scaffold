@@ -1,0 +1,163 @@
+<?php
+
+declare(strict_types=1);
+
+namespace CaminoDelDev\LaravelApiScaffold\Commands;
+
+use CaminoDelDev\LaravelApiScaffold\Database\Drivers\MySqlTableInspector;
+use CaminoDelDev\LaravelApiScaffold\Generators\ControllerGenerator;
+use CaminoDelDev\LaravelApiScaffold\Generators\ModelGenerator;
+use CaminoDelDev\LaravelApiScaffold\Generators\RequestGenerator;
+use CaminoDelDev\LaravelApiScaffold\Generators\ResourceGenerator;
+use CaminoDelDev\LaravelApiScaffold\Generators\RouteGenerator;
+use CaminoDelDev\LaravelApiScaffold\Generators\ServiceGenerator;
+use CaminoDelDev\LaravelApiScaffold\Generators\TestGenerator;
+use CaminoDelDev\LaravelApiScaffold\Naming\NameResolver;
+use CaminoDelDev\LaravelApiScaffold\Support\FileWriter;
+use Illuminate\Console\Command;
+
+class ScaffoldApiCommand extends Command
+{
+    protected $signature = 'scaffold:api
+                            {table : Database table name}
+                            {--connection= : Database connection name}
+                            {--model= : Explicit model class name}
+                            {--read-only : Generate only index and show endpoints}
+                            {--crud : Generate index, show, store and update endpoints}
+                            {--with-delete : Also generate destroy endpoint. Requires --crud}
+                            {--dry-run : Show what would be generated without writing files}
+                            {--force : Overwrite existing files}';
+
+    protected $description = 'Generate a clean, secure and configurable Laravel API scaffold from a database table.';
+
+    public function handle(
+        MySqlTableInspector $inspector,
+        NameResolver $nameResolver,
+        ModelGenerator $modelGenerator,
+        ResourceGenerator $resourceGenerator,
+        RequestGenerator $requestGenerator,
+        ServiceGenerator $serviceGenerator,
+        ControllerGenerator $controllerGenerator,
+        RouteGenerator $routeGenerator,
+        TestGenerator $testGenerator,
+        FileWriter $fileWriter,
+    ): int {
+        $table = (string) $this->argument('table');
+        $connection = $this->option('connection') ? (string) $this->option('connection') : null;
+        $model = $this->option('model') ? (string) $this->option('model') : null;
+        $crud = (bool) $this->option('crud');
+        $withDelete = (bool) $this->option('with-delete');
+        $dryRun = (bool) $this->option('dry-run');
+        $force = (bool) $this->option('force');
+
+        if ($withDelete && ! $crud) {
+            $this->error('--with-delete requires --crud.');
+
+            return self::FAILURE;
+        }
+
+        if (! $crud) {
+            $this->warn('Safe default enabled: generating read-only API endpoints only.');
+        }
+
+        if ($crud) {
+            $this->warn('Write endpoints are being generated. Review authorization and business rules before production use.');
+        }
+
+        if ($withDelete) {
+            $this->warn('Delete endpoint is being generated. Ensure authorization, auditing and rollback strategy are defined.');
+        }
+
+        $definition = $inspector->inspect($table, $connection);
+        $names = $nameResolver->resolve($table, $model);
+
+        $files = [];
+
+        if (config('api-scaffold.generation.generate_model', true)) {
+            $files[$this->path('models', "{$names['model']}.php")] = $modelGenerator->generate($definition, $names);
+        }
+
+        if (config('api-scaffold.generation.generate_resource', true)) {
+            $files[$this->path('resources', "{$names['resource']}.php")] = $resourceGenerator->generate($definition, $names);
+        }
+
+        if (config('api-scaffold.generation.generate_form_requests', true)) {
+            $requestBase = $this->path('requests', $names['model']);
+            $files[$requestBase . DIRECTORY_SEPARATOR . "{$names['indexRequest']}.php"] = $requestGenerator->generateIndex($names);
+
+            if ($crud) {
+                $files[$requestBase . DIRECTORY_SEPARATOR . "{$names['storeRequest']}.php"] = $requestGenerator->generateStore($definition, $names);
+                $files[$requestBase . DIRECTORY_SEPARATOR . "{$names['updateRequest']}.php"] = $requestGenerator->generateUpdate($definition, $names);
+            }
+        }
+
+        if (config('api-scaffold.generation.generate_service', true)) {
+            $files[$this->path('services', "{$names['service']}.php")] = $serviceGenerator->generate($names, $crud, $withDelete);
+        }
+
+        $files[$this->path('controllers', "{$names['controller']}.php")] = $controllerGenerator->generate($names, $crud, $withDelete);
+
+        if (config('api-scaffold.routes.enabled', true)) {
+            $routeFile = (string) config('api-scaffold.routes.file');
+            $files[$routeFile] = $this->mergeRouteFile(
+                $routeFile,
+                $routeGenerator->generate($names, $crud, $withDelete)
+            );
+        }
+
+        if (config('api-scaffold.generation.generate_tests', true)) {
+            $files[$this->path('tests', "{$names['test']}.php")] = $testGenerator->generate($names);
+        }
+
+        foreach ($files as $path => $contents) {
+            $fileWriter->write($path, $contents, $force, $dryRun);
+            $this->info(($dryRun ? 'Would generate' : 'Generated') . ": {$path}");
+        }
+
+        if (config('api-scaffold.routes.import_from_api_php', true)) {
+            $this->ensureApiRoutesImport($fileWriter, $dryRun);
+        }
+
+        $this->newLine();
+        $this->info('API scaffold completed. Review generated authorization, validation and exposed fields before production use.');
+
+        return self::SUCCESS;
+    }
+
+    private function path(string $key, string $file): string
+    {
+        return rtrim((string) config("api-scaffold.paths.{$key}"), DIRECTORY_SEPARATOR)
+            . DIRECTORY_SEPARATOR
+            . $file;
+    }
+
+    private function mergeRouteFile(string $routeFile, string $newRoute): string
+    {
+        if (! is_file($routeFile)) {
+            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . $newRoute . PHP_EOL;
+        }
+
+        $current = file_get_contents($routeFile);
+
+        if ($current === false) {
+            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . $newRoute . PHP_EOL;
+        }
+
+        if (str_contains($current, $newRoute)) {
+            return $current;
+        }
+
+        return rtrim($current) . PHP_EOL . PHP_EOL . $newRoute . PHP_EOL;
+    }
+
+    private function ensureApiRoutesImport(FileWriter $fileWriter, bool $dryRun): void
+    {
+        $apiRoutePath = base_path('routes/api.php');
+        $import = "if (file_exists(__DIR__ . '/scaffolded-api.php')) {\n    require __DIR__ . '/scaffolded-api.php';\n}";
+        $needle = "scaffolded-api.php";
+
+        $fileWriter->appendOnce($apiRoutePath, $needle, $import, $dryRun);
+
+        $this->info(($dryRun ? 'Would ensure import in' : 'Ensured import in') . ": {$apiRoutePath}");
+    }
+}

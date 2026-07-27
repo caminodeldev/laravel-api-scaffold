@@ -1,0 +1,148 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Routes
+    |--------------------------------------------------------------------------
+    |
+    | The package writes generated routes to a dedicated file. This keeps
+    | routes/api.php small and makes generated changes easier to review.
+    |
+    */
+
+    'routes' => [
+        'enabled' => true,
+        'file' => base_path('routes/scaffolded-api.php'),
+        'import_from_api_php' => true,
+        'prefix' => 'v1',
+        'middleware' => ['api'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Paths
+    |--------------------------------------------------------------------------
+    */
+
+    'paths' => [
+        'controllers' => app_path('Http/Controllers/frontend/v1'),
+        'requests' => app_path('Http/Requests/Frontend'),
+        'resources' => app_path('Http/Resources'),
+        'services' => app_path('Services'),
+        'models' => app_path('Models'),
+        'tests' => base_path('tests/Feature'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Namespaces
+    |--------------------------------------------------------------------------
+    */
+
+    'namespaces' => [
+        'controllers' => 'App\\Http\\Controllers\\frontend\\v1',
+        'requests' => 'App\\Http\\Requests\\Frontend',
+        'resources' => 'App\\Http\\Resources',
+        'services' => 'App\\Services',
+        'models' => 'App\\Models',
+        'tests' => 'Tests\\Feature',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generation Defaults
+    |--------------------------------------------------------------------------
+    |
+    | Read-only is the default and safest mode. Write operations must be
+    | requested explicitly with command flags.
+    |
+    */
+
+    'generation' => [
+        'default_operations' => ['index', 'show'],
+        'allow_write_operations' => false,
+        'generate_model' => true,
+        'generate_service' => true,
+        'generate_resource' => true,
+        'generate_form_requests' => true,
+        'generate_tests' => true,
+        'declare_strict_types' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | API Envelope
+    |--------------------------------------------------------------------------
+    |
+    | This generic envelope can be changed to match any organizational contract.
+    | No proprietary or institution-specific naming is hardcoded in the package.
+    |
+    */
+
+    'envelope' => [
+        'enabled' => true,
+        'keys' => [
+            'code' => 'code',
+            'message' => 'message',
+            'data' => 'data',
+        ],
+        'messages' => [
+            'index_success' => 'Records retrieved successfully.',
+            'show_success' => 'Record retrieved successfully.',
+            'store_success' => 'Record created successfully.',
+            'update_success' => 'Record updated successfully.',
+            'delete_success' => 'Record deleted successfully.',
+            'internal_error' => 'Internal server error.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security Defaults
+    |--------------------------------------------------------------------------
+    |
+    | These columns are excluded from generated fillable arrays and API
+    | resources by default. Review generated files before production use.
+    |
+    */
+
+    'security' => [
+        'excluded_columns' => [
+            'password',
+            'password_confirmation',
+            'remember_token',
+            'token',
+            'access_token',
+            'refresh_token',
+            'secret',
+            'api_key',
+            'api_secret',
+            'access_key',
+            'secret_key',
+            'private_key',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+        ],
+
+        'hidden_columns' => [
+            'password',
+            'remember_token',
+            'token',
+            'access_token',
+            'refresh_token',
+            'secret',
+            'api_key',
+            'api_secret',
+            'access_key',
+            'secret_key',
+            'private_key',
+        ],
+
+        'max_per_page' => 100,
+        'default_per_page' => 15,
+    ],
+];

@@ -1,0 +1,26 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use {{ modelNamespace }}\{{ model }};
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+class {{ class }}
+{
+    /**
+     * Lists records using safe pagination.
+     *
+     * @param array<string, mixed> $filters
+     */
+    public function paginate(array $filters): LengthAwarePaginator
+    {
+        $query = {{ model }}::query();
+
+        return $query->paginate(
+            perPage: (int) ($filters['perPage'] ?? config('api-scaffold.security.default_per_page', 15))
+        );
+    }
+{{ crudMethods }}
+}

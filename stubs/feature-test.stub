@@ -1,0 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Tests\TestCase;
+
+class {{ class }} extends TestCase
+{
+    public function test_index_endpoint_responds_successfully(): void
+    {
+        $response = $this->getJson('/{{ routePrefix }}/{{ route }}');
+
+        $response->assertStatus(200);
+    }
+}

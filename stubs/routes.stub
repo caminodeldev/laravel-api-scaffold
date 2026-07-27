@@ -1,0 +1,6 @@
+Route::prefix(config('api-scaffold.routes.prefix', 'v1'))
+    ->middleware(config('api-scaffold.routes.middleware', ['api']))
+    ->group(function (): void {
+        Route::apiResource('{{ route }}', \{{ controllerNamespace }}\{{ controller }}::class)
+            ->only({{ only }});
+    });

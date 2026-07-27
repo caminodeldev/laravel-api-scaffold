@@ -1,0 +1,28 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use Illuminate\Database\Eloquent\Model;
+{{ softDeletesImport }}
+class {{ class }} extends Model
+{
+{{ softDeletesTrait }}    protected $table = '{{ table }}';
+
+    protected $primaryKey = '{{ primaryKey }}';
+
+    public $timestamps = {{ timestamps }};
+
+    protected $fillable = [
+{{ fillable }}
+    ];
+
+    protected $hidden = [
+{{ hidden }}
+    ];
+
+    protected $casts = [
+{{ casts }}
+    ];
+}
