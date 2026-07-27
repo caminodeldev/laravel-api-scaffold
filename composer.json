@@ -64,7 +64,6 @@
     "sort-packages": true
   },
   "scripts": {
-    "test": "vendor/bin/phpunit --colors=always",
-    "validate": "composer validate --strict"
+    "test": "vendor/bin/phpunit --colors=always"
   }
 }
