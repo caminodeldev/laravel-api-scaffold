@@ -110,19 +110,51 @@ return [
     */
 
     'security' => [
+        /*
+        |--------------------------------------------------------------------------
+        | Exact Sensitive Columns
+        |--------------------------------------------------------------------------
+        |
+        | Exact names are normalized before comparison, so apiKey, api_key and
+        | API-KEY are treated consistently. These columns are never generated
+        | into fillable arrays or API resources.
+        |
+        */
+
         'excluded_columns' => [
             'password',
             'password_confirmation',
+            'password_hash',
+            'passwd',
+            'pwd',
             'remember_token',
             'token',
             'access_token',
             'refresh_token',
+            'id_token',
+            'personal_access_token',
+            'jwt',
+            'bearer_token',
             'secret',
+            'client_secret',
             'api_key',
             'api_secret',
             'access_key',
             'secret_key',
             'private_key',
+            'encryption_key',
+            'signing_key',
+            'webhook_secret',
+            'session_id',
+            'csrf_token',
+            'xsrf_token',
+            'otp',
+            'mfa_secret',
+            'two_factor_secret',
+            'recovery_code',
+            'recovery_codes',
+            'salt',
+            'hash',
             'created_at',
             'updated_at',
             'deleted_at',
@@ -130,16 +162,60 @@ return [
 
         'hidden_columns' => [
             'password',
+            'password_confirmation',
+            'password_hash',
+            'passwd',
+            'pwd',
             'remember_token',
             'token',
             'access_token',
             'refresh_token',
+            'id_token',
+            'personal_access_token',
+            'jwt',
+            'bearer_token',
             'secret',
+            'client_secret',
             'api_key',
             'api_secret',
             'access_key',
             'secret_key',
             'private_key',
+            'encryption_key',
+            'signing_key',
+            'webhook_secret',
+            'session_id',
+            'csrf_token',
+            'xsrf_token',
+            'otp',
+            'mfa_secret',
+            'two_factor_secret',
+            'recovery_code',
+            'recovery_codes',
+            'salt',
+            'hash',
+        ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sensitive Name Patterns
+        |--------------------------------------------------------------------------
+        |
+        | These regular expressions catch common secret-like names without
+        | treating every column containing "key" as sensitive. For example,
+        | foreign_key_id remains allowed, while api_key and signing_key are
+        | excluded.
+        |
+        */
+
+        'sensitive_name_patterns' => [
+            '/(^|_)(password|passwd|pwd)(_|$)/i',
+            '/(^|_)(token|jwt|bearer)(_|$)/i',
+            '/(^|_)(secret|credential|credentials)(_|$)/i',
+            '/(^|_)(client|api|access|secret|private|encryption|signing|webhook|aws|gcp|azure)_(key|secret|token)(_|$)/i',
+            '/(^|_)(otp|mfa|two_factor|recovery_code|recovery_codes)(_|$)/i',
+            '/(^|_)(session|cookie|csrf|xsrf)(_|$)/i',
+            '/(^|_)(hash|salt)(_|$)/i',
         ],
 
         'max_per_page' => 100,
