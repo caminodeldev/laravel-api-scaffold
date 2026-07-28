@@ -10,7 +10,7 @@ class {{ class }} extends TestCase
 {
     public function test_index_endpoint_responds_successfully(): void
     {
-        $response = $this->getJson('/{{ routePrefix }}/{{ route }}');
+        $response = $this->getJson(route('{{ routeName }}.index'));
 
         $response->assertStatus(200);
     }
