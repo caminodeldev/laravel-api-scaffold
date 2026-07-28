@@ -4,28 +4,53 @@ declare(strict_types=1);
 
 namespace CaminoDelDev\LaravelApiScaffold\Generators;
 
+use CaminoDelDev\LaravelApiScaffold\Database\TableDefinition;
+use CaminoDelDev\LaravelApiScaffold\Support\PhpArrayRenderer;
+use CaminoDelDev\LaravelApiScaffold\Support\QueryColumnResolver;
 use CaminoDelDev\LaravelApiScaffold\Support\StubRenderer;
 
 final readonly class ServiceGenerator
 {
     public function __construct(
         private StubRenderer $stubRenderer,
+        private PhpArrayRenderer $arrayRenderer,
     ) {
     }
 
     /**
      * @param array<string, string> $names
      */
-    public function generate(array $names, bool $crud = false, bool $withDelete = false): string
+    public function generate(TableDefinition $table, array $names, bool $crud = false, bool $withDelete = false): string
     {
+        $queryColumns = QueryColumnResolver::fromConfig();
+        $sortableColumns = $queryColumns->sortable($table);
+
         return $this->stubRenderer->render(__DIR__ . '/../../stubs/service.stub', [
             'namespace' => config('api-scaffold.namespaces.services'),
             'modelNamespace' => config('api-scaffold.namespaces.models'),
             'class' => $names['service'],
             'model' => $names['model'],
             'modelVariable' => $names['modelVariable'],
+            'filterableColumns' => $this->arrayRenderer->stringList($queryColumns->filterable($table), 8),
+            'searchableColumns' => $this->arrayRenderer->stringList($queryColumns->searchable($table), 8),
+            'sortableColumns' => $this->arrayRenderer->stringList($sortableColumns, 8),
+            'defaultSort' => $this->defaultSort($table, $sortableColumns),
             'crudMethods' => $crud ? $this->crudMethods($names, $withDelete) : '',
         ]);
+    }
+
+    /**
+     * @param array<int, string> $sortableColumns
+     */
+    private function defaultSort(TableDefinition $table, array $sortableColumns): string
+    {
+        $primaryKey = $table->primaryKey()?->name;
+
+        if ($primaryKey !== null && in_array($primaryKey, $sortableColumns, true)) {
+            return "-{$primaryKey}";
+        }
+
+        return $sortableColumns[0] ?? '';
     }
 
     /**

@@ -6,11 +6,33 @@ namespace {{ namespace }};
 
 use {{ modelNamespace }}\{{ model }};
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class {{ class }}
 {
     /**
-     * Lists records using safe pagination.
+     * @var array<int, string>
+     */
+    private const FILTERABLE = [
+{{ filterableColumns }}
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    private const SEARCHABLE = [
+{{ searchableColumns }}
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    private const SORTABLE = [
+{{ sortableColumns }}
+    ];
+
+    /**
+     * Lists records using safe filters, search, sorting and pagination.
      *
      * @param array<string, mixed> $filters
      */
@@ -18,8 +40,90 @@ class {{ class }}
     {
         $query = {{ model }}::query();
 
+        $this->applyFilters($query, $filters);
+        $this->applySearch($query, $filters);
+        $this->applySort($query, $filters);
+
         return $query->paginate(
-            perPage: (int) ($filters['perPage'] ?? config('api-scaffold.security.default_per_page', 15))
+            perPage: $this->perPage($filters)
+        );
+    }
+
+    /**
+     * @param Builder<{{ model }}> $query
+     * @param array<string, mixed> $filters
+     */
+    private function applyFilters(Builder $query, array $filters): void
+    {
+        $nestedFilters = is_array($filters['filter'] ?? null) ? $filters['filter'] : [];
+        $allowed = array_flip(self::FILTERABLE);
+        $activeFilters = array_merge(
+            array_intersect_key($filters, $allowed),
+            array_intersect_key($nestedFilters, $allowed),
+        );
+
+        foreach ($activeFilters as $column => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $query->where((string) $column, $value);
+        }
+    }
+
+    /**
+     * @param Builder<{{ model }}> $query
+     * @param array<string, mixed> $filters
+     */
+    private function applySearch(Builder $query, array $filters): void
+    {
+        $search = trim((string) ($filters['search'] ?? ''));
+
+        if ($search === '' || self::SEARCHABLE === []) {
+            return;
+        }
+
+        $query->where(function (Builder $query) use ($search): void {
+            foreach (self::SEARCHABLE as $column) {
+                $query->orWhere($column, 'like', "%{$search}%");
+            }
+        });
+    }
+
+    /**
+     * @param Builder<{{ model }}> $query
+     * @param array<string, mixed> $filters
+     */
+    private function applySort(Builder $query, array $filters): void
+    {
+        $sort = (string) ($filters['sort'] ?? config('api-scaffold.query.default_sort', '{{ defaultSort }}'));
+
+        foreach (array_filter(array_map('trim', explode(',', $sort))) as $sortColumn) {
+            $direction = str_starts_with($sortColumn, '-') ? 'desc' : 'asc';
+            $column = ltrim($sortColumn, '-');
+
+            if (! in_array($column, self::SORTABLE, true)) {
+                continue;
+            }
+
+            $query->orderBy($column, $direction);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     */
+    private function perPage(array $filters): int
+    {
+        $value = $filters['per_page']
+            ?? $filters['perPage']
+            ?? config('api-scaffold.pagination.default_per_page', config('api-scaffold.security.default_per_page', 15));
+
+        $maxPerPage = (int) config('api-scaffold.pagination.max_per_page', config('api-scaffold.security.max_per_page', 100));
+
+        return min(
+            max(1, (int) $value),
+            max(1, $maxPerPage)
         );
     }
 {{ crudMethods }}

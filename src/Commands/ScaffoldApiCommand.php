@@ -104,7 +104,7 @@ class ScaffoldApiCommand extends Command
         }
 
         if (config('api-scaffold.generation.generate_service', true)) {
-            $files[$this->path('services', "{$names['service']}.php")] = $serviceGenerator->generate($names, $crud, $withDelete);
+            $files[$this->path('services', "{$names['service']}.php")] = $serviceGenerator->generate($definition, $names, $crud, $withDelete);
         }
 
         $files[$this->path('controllers', "{$names['controller']}.php")] = $controllerGenerator->generate($names, $crud, $withDelete);
