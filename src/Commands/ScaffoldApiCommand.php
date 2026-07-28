@@ -113,7 +113,8 @@ class ScaffoldApiCommand extends Command
             $routeFile = (string) config('api-scaffold.routes.file');
             $files[$routeFile] = $this->mergeRouteFile(
                 $routeFile,
-                $routeGenerator->generate($names, $crud, $withDelete)
+                $routeGenerator->generate($names, $crud, $withDelete),
+                $names['route']
             );
         }
 
@@ -143,23 +144,41 @@ class ScaffoldApiCommand extends Command
             . $file;
     }
 
-    private function mergeRouteFile(string $routeFile, string $newRoute): string
+    private function mergeRouteFile(string $routeFile, string $newRoute, string $routeResource): string
     {
         if (! is_file($routeFile)) {
-            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . $newRoute . PHP_EOL;
+            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . rtrim($newRoute) . PHP_EOL;
         }
 
         $current = file_get_contents($routeFile);
 
         if ($current === false) {
-            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . $newRoute . PHP_EOL;
+            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . rtrim($newRoute) . PHP_EOL;
         }
 
-        if (str_contains($current, $newRoute)) {
-            return $current;
+        $startMarker = $this->managedRouteStartMarker($routeResource);
+        $endMarker = $this->managedRouteEndMarker($routeResource);
+        $managedBlockPattern = sprintf(
+            '/%s.*?%s/s',
+            preg_quote($startMarker, '/'),
+            preg_quote($endMarker, '/')
+        );
+
+        if (preg_match($managedBlockPattern, $current) === 1) {
+            return preg_replace($managedBlockPattern, rtrim($newRoute), $current) ?? $current;
         }
 
-        return rtrim($current) . PHP_EOL . PHP_EOL . $newRoute . PHP_EOL;
+        return rtrim($current) . PHP_EOL . PHP_EOL . rtrim($newRoute) . PHP_EOL;
+    }
+
+    private function managedRouteStartMarker(string $routeResource): string
+    {
+        return sprintf('// <laravel-api-scaffold resource="%s">', $routeResource);
+    }
+
+    private function managedRouteEndMarker(string $routeResource): string
+    {
+        return sprintf('// </laravel-api-scaffold resource="%s">', $routeResource);
     }
 
     private function ensureApiRoutesImport(FileWriter $fileWriter, bool $dryRun): void
