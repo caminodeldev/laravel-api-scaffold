@@ -26,6 +26,7 @@ class ScaffoldApiCommand extends Command
                             {table : Database table name}
                             {--connection= : Database connection name}
                             {--model= : Explicit model class name}
+                            {--route-resource= : Custom API resource URI. Defaults to the table name}
                             {--read-only : Generate only index and show endpoints}
                             {--crud : Generate index, show, store and update endpoints}
                             {--with-delete : Also generate destroy endpoint. Requires --crud}
@@ -49,10 +50,17 @@ class ScaffoldApiCommand extends Command
         $table = (string) $this->argument('table');
         $connection = $this->option('connection') ? (string) $this->option('connection') : null;
         $model = $this->option('model') ? (string) $this->option('model') : null;
+        $routeResource = $this->option('route-resource') ? trim((string) $this->option('route-resource')) : null;
         $crud = (bool) $this->option('crud');
         $withDelete = (bool) $this->option('with-delete');
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
+
+        if ($routeResource === '') {
+            $this->error('--route-resource cannot be empty.');
+
+            return self::FAILURE;
+        }
 
         if ($withDelete && ! $crud) {
             $this->error('--with-delete requires --crud.');
@@ -73,7 +81,7 @@ class ScaffoldApiCommand extends Command
         }
 
         $definition = $inspector->inspect($table, $connection);
-        $names = $nameResolver->resolve($table, $model);
+        $names = $nameResolver->resolve($table, $model, $routeResource);
 
         $files = [];
 
