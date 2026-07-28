@@ -37,7 +37,7 @@ final readonly class ModelGenerator
 
         $casts = [];
         foreach ($table->columns as $column) {
-            $cast = $this->castForType($column->type);
+            $cast = $this->castForColumn($column);
             if ($cast !== null) {
                 $casts[$column->name] = $cast;
             }
@@ -57,9 +57,13 @@ final readonly class ModelGenerator
         ]);
     }
 
-    private function castForType(string $type): ?string
+    private function castForColumn(\CaminoDelDev\LaravelApiScaffold\Database\ColumnDefinition $column): ?string
     {
-        return match (strtolower($type)) {
+        if (strtolower($column->type) === 'tinyint' && $column->length === 1) {
+            return 'boolean';
+        }
+
+        return match (strtolower($column->type)) {
             'bigint', 'int', 'integer', 'mediumint', 'smallint', 'tinyint' => 'integer',
             'decimal', 'double', 'float' => 'decimal:2',
             'boolean', 'bool' => 'boolean',
