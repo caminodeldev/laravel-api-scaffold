@@ -26,6 +26,7 @@ class ScaffoldApiCommand extends Command
                             {table : Database table name}
                             {--connection= : Database connection name}
                             {--model= : Explicit model class name}
+                            {--route-resource= : Custom API resource URI. Defaults to the table name}
                             {--read-only : Generate only index and show endpoints}
                             {--crud : Generate index, show, store and update endpoints}
                             {--with-delete : Also generate destroy endpoint. Requires --crud}
@@ -49,10 +50,17 @@ class ScaffoldApiCommand extends Command
         $table = (string) $this->argument('table');
         $connection = $this->option('connection') ? (string) $this->option('connection') : null;
         $model = $this->option('model') ? (string) $this->option('model') : null;
+        $routeResource = $this->option('route-resource') ? trim((string) $this->option('route-resource')) : null;
         $crud = (bool) $this->option('crud');
         $withDelete = (bool) $this->option('with-delete');
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
+
+        if ($routeResource === '') {
+            $this->error('--route-resource cannot be empty.');
+
+            return self::FAILURE;
+        }
 
         if ($withDelete && ! $crud) {
             $this->error('--with-delete requires --crud.');
@@ -73,7 +81,7 @@ class ScaffoldApiCommand extends Command
         }
 
         $definition = $inspector->inspect($table, $connection);
-        $names = $nameResolver->resolve($table, $model);
+        $names = $nameResolver->resolve($table, $model, $routeResource);
 
         $files = [];
 
@@ -105,7 +113,8 @@ class ScaffoldApiCommand extends Command
             $routeFile = (string) config('api-scaffold.routes.file');
             $files[$routeFile] = $this->mergeRouteFile(
                 $routeFile,
-                $routeGenerator->generate($names, $crud, $withDelete)
+                $routeGenerator->generate($names, $crud, $withDelete),
+                $names['route']
             );
         }
 
@@ -135,23 +144,41 @@ class ScaffoldApiCommand extends Command
             . $file;
     }
 
-    private function mergeRouteFile(string $routeFile, string $newRoute): string
+    private function mergeRouteFile(string $routeFile, string $newRoute, string $routeResource): string
     {
         if (! is_file($routeFile)) {
-            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . $newRoute . PHP_EOL;
+            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . rtrim($newRoute) . PHP_EOL;
         }
 
         $current = file_get_contents($routeFile);
 
         if ($current === false) {
-            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . $newRoute . PHP_EOL;
+            return "<?php\n\nuse Illuminate\\Support\\Facades\\Route;\n\n" . rtrim($newRoute) . PHP_EOL;
         }
 
-        if (str_contains($current, $newRoute)) {
-            return $current;
+        $startMarker = $this->managedRouteStartMarker($routeResource);
+        $endMarker = $this->managedRouteEndMarker($routeResource);
+        $managedBlockPattern = sprintf(
+            '/%s.*?%s/s',
+            preg_quote($startMarker, '/'),
+            preg_quote($endMarker, '/')
+        );
+
+        if (preg_match($managedBlockPattern, $current) === 1) {
+            return preg_replace($managedBlockPattern, rtrim($newRoute), $current) ?? $current;
         }
 
-        return rtrim($current) . PHP_EOL . PHP_EOL . $newRoute . PHP_EOL;
+        return rtrim($current) . PHP_EOL . PHP_EOL . rtrim($newRoute) . PHP_EOL;
+    }
+
+    private function managedRouteStartMarker(string $routeResource): string
+    {
+        return sprintf('// <laravel-api-scaffold resource="%s">', $routeResource);
+    }
+
+    private function managedRouteEndMarker(string $routeResource): string
+    {
+        return sprintf('// </laravel-api-scaffold resource="%s">', $routeResource);
     }
 
     private function ensureApiRoutesImport(FileWriter $fileWriter, bool $dryRun): void

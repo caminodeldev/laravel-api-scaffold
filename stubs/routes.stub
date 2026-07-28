@@ -1,6 +1,9 @@
+// <laravel-api-scaffold resource="{{ route }}">
 Route::prefix(config('api-scaffold.routes.prefix', 'v1'))
     ->middleware(config('api-scaffold.routes.middleware', ['api']))
     ->group(function (): void {
         Route::apiResource('{{ route }}', \{{ controllerNamespace }}\{{ controller }}::class)
-            ->only({{ only }});
+            ->only({{ only }})
+            ->parameters(['{{ routeParameterResource }}' => '{{ routeParameter }}']);
     });
+// </laravel-api-scaffold resource="{{ route }}">

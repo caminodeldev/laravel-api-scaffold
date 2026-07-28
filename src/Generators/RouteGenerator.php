@@ -26,6 +26,8 @@ final readonly class RouteGenerator
             'controllerNamespace' => config('api-scaffold.namespaces.controllers'),
             'controller' => $names['controller'],
             'route' => $names['route'],
+            'routeParameterResource' => $names['routeParameterResource'],
+            'routeParameter' => $names['routeParameter'],
             'only' => $only,
         ]);
     }

@@ -6,6 +6,9 @@ namespace CaminoDelDev\LaravelApiScaffold\Database;
 
 final readonly class ColumnDefinition
 {
+    /**
+     * @param array<int, string> $allowedValues
+     */
     public function __construct(
         public string $name,
         public string $type,
@@ -15,6 +18,7 @@ final readonly class ColumnDefinition
         public bool $autoIncrement = false,
         public bool $unique = false,
         public mixed $default = null,
+        public array $allowedValues = [],
     ) {
     }
 

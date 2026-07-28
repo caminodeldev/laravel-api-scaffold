@@ -21,8 +21,9 @@ final readonly class TestGenerator
         return $this->stubRenderer->render(__DIR__ . '/../../stubs/feature-test.stub', [
             'namespace' => config('api-scaffold.namespaces.tests'),
             'class' => $names['test'],
-            'routePrefix' => trim(config('api-scaffold.routes.prefix', 'v1'), '/'),
-            'route' => $names['route'],
+            'serviceNamespace' => config('api-scaffold.namespaces.services'),
+            'service' => $names['service'],
+            'routeName' => $names['routeName'],
         ]);
     }
 }

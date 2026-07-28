@@ -37,6 +37,7 @@ final readonly class MySqlTableInspector implements TableInspector
             SELECT
                 COLUMN_NAME AS name,
                 DATA_TYPE AS type,
+                COLUMN_TYPE AS column_type,
                 CHARACTER_MAXIMUM_LENGTH AS length_value,
                 IS_NULLABLE AS nullable_value,
                 COLUMN_KEY AS column_key,
@@ -63,7 +64,7 @@ final readonly class MySqlTableInspector implements TableInspector
             driver: 'mysql',
             table: $table,
             columns: array_map(
-                static fn (object $column): ColumnDefinition => new ColumnDefinition(
+                fn (object $column): ColumnDefinition => new ColumnDefinition(
                     name: (string) $column->name,
                     type: (string) $column->type,
                     length: $column->length_value !== null ? (int) $column->length_value : null,
@@ -72,9 +73,31 @@ final readonly class MySqlTableInspector implements TableInspector
                     autoIncrement: str_contains(strtolower((string) $column->extra_value), 'auto_increment'),
                     unique: in_array((string) $column->column_key, ['UNI', 'PRI'], true),
                     default: $column->default_value,
+                    allowedValues: $this->enumAllowedValues($column->column_type ?? null),
                 ),
                 $columns
             )
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function enumAllowedValues(mixed $columnType): array
+    {
+        if (! is_string($columnType) || ! str_starts_with(strtolower($columnType), 'enum(')) {
+            return [];
+        }
+
+        $rawValues = substr($columnType, 5, -1);
+
+        if ($rawValues === false || $rawValues === '') {
+            return [];
+        }
+
+        return array_map(
+            static fn (string $value): string => $value,
+            str_getcsv($rawValues, ',', "'", '\\')
         );
     }
 }
