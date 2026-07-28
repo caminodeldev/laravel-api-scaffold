@@ -31,14 +31,14 @@ Este paquete no:
 - Crea migraciones de base de datos.
 - Reemplaza policies, gates, middleware ni validaciones de dominio.
 - Garantiza que el código generado esté listo para producción sin revisión.
-- Soporta todos los motores de base de datos en `v0.1.1`.
+- Soporta todos los motores de base de datos en `v0.1.2`.
 
 ## Estado de release
 
 Release preparado actualmente:
 
 ```text
-v0.1.1
+v0.1.2
 ```
 
 Este release se enfoca en un scaffold API seguro y orientado primero a MySQL, con generación read-only como default recomendado y flags explícitos para escritura y eliminación.

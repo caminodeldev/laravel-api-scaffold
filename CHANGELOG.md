@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 This project follows semantic versioning once stable releases are published.
 
+## [0.1.2] - 2026-07-28
+
+### Added
+
+- Internal `ResponseEnvelope::make()` helper to centralize generated API response envelopes.
+- Optional `response.helper` and `response.method` configuration to delegate envelope formatting to a compatible application helper, such as `App\Helpers\ResponseHelper::returnResponse()`.
+- Optional `response.include_timestamp` support for the package default envelope.
+- Configurable `envelope.keys.timestamp` key for timestamp output.
+
+### Changed
+
+- Generated controllers now call `ResponseEnvelope::make()` instead of building response arrays inline.
+- Generated controllers depend on the package helper at runtime unless projects replace the generated response calls with their own application helper.
+
+### Documentation
+
+- Documented the internal response envelope helper.
+- Documented explicit integration with application-level helpers.
+- Documented the runtime dependency introduced by generated controllers using `ResponseEnvelope`.
+
 ## [0.1.1] - 2026-07-28
 
 ### Fixed
