@@ -14,6 +14,7 @@ This project follows semantic versioning once stable releases are published.
 - Generate index smoke tests with a mocked Service paginator so they do not depend on the consumer application's testing database state.
 - Use configurable response envelope keys and messages consistently across generated `store`, `update` and `destroy` controller actions.
 - Replace managed blocks in `routes/scaffolded-api.php` per generated resource instead of appending duplicate blocks on regeneration.
+- Generated feature tests now mock the generated service to avoid depending on the consumer application's test database state.
 
 ### Added
 
