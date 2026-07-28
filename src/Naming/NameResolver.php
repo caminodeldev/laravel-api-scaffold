@@ -13,14 +13,17 @@ final class NameResolver
      *
      * @return array<string, string>
      */
-    public function resolve(string $table, ?string $model = null): array
+    public function resolve(string $table, ?string $model = null, ?string $routeResource = null): array
     {
+        $table = trim($table);
         $modelName = $model ?: Str::studly(Str::singular($table));
+        $modelVariable = Str::camel($modelName);
+        $route = $this->normalizeRouteResource($routeResource ?: $table);
 
         return [
             'table' => $table,
             'model' => $modelName,
-            'modelVariable' => Str::camel($modelName),
+            'modelVariable' => $modelVariable,
             'modelPluralVariable' => Str::camel(Str::pluralStudly($modelName)),
             'controller' => "{$modelName}Controller",
             'service' => "{$modelName}Service",
@@ -28,8 +31,35 @@ final class NameResolver
             'indexRequest' => "Index{$modelName}Request",
             'storeRequest' => "Store{$modelName}Request",
             'updateRequest' => "Update{$modelName}Request",
-            'route' => Str::kebab(Str::plural(Str::snake($modelName))),
+            'route' => $route,
+            'routeName' => str_replace('/', '.', $route),
+            'routeParameterResource' => $this->lastRouteSegment($route),
+            'routeParameter' => $modelVariable,
             'test' => "{$modelName}ApiTest",
         ];
+    }
+
+    private function normalizeRouteResource(string $routeResource): string
+    {
+        $routeResource = trim($routeResource);
+        $routeResource = trim($routeResource, '/');
+        $routeResource = preg_replace('#/+#', '/', $routeResource) ?? $routeResource;
+
+        $segments = array_map(
+            static fn (string $segment): string => Str::kebab($segment),
+            explode('/', $routeResource)
+        );
+
+        return implode('/', array_values(array_filter(
+            $segments,
+            static fn (string $segment): bool => $segment !== ''
+        )));
+    }
+
+    private function lastRouteSegment(string $route): string
+    {
+        $segments = explode('/', $route);
+
+        return end($segments) ?: $route;
     }
 }
