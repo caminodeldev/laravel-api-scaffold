@@ -20,8 +20,12 @@ class {{ class }} extends FormRequest
     {
         return [
             'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:{{ maxPerPage }}'],
             'perPage' => ['nullable', 'integer', 'min:1', 'max:{{ maxPerPage }}'],
             'search' => ['nullable', 'string', 'max:255'],
+            'sort' => ['nullable', 'string', 'max:255'],
+            'filter' => ['nullable', 'array'],
+{{ filterRules }}
         ];
     }
 }
