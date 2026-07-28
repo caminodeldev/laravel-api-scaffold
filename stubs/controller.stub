@@ -23,12 +23,12 @@ class {{ class }} extends Controller
     public function index({{ indexRequest }} $request): JsonResponse
     {
         try {
-            ${{ modelPluralVariable }} = $this->{{ modelVariable }}Service->paginate($request->validated());
+            $records = $this->{{ modelVariable }}Service->paginate($request->validated());
 
             return response()->json([
                 config('api-scaffold.envelope.keys.code', 'code') => 200,
                 config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.index_success', 'Records retrieved successfully.'),
-                config('api-scaffold.envelope.keys.data', 'data') => {{ resource }}::collection(${{ modelPluralVariable }}),
+                config('api-scaffold.envelope.keys.data', 'data') => {{ resource }}::collection($records),
             ]);
         } catch (Throwable $throwable) {
             Log::error('Error retrieving records.', [

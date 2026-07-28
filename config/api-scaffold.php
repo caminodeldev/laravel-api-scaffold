@@ -94,6 +94,7 @@ return [
             'show_success' => 'Record retrieved successfully.',
             'store_success' => 'Record created successfully.',
             'update_success' => 'Record updated successfully.',
+            'destroy_success' => 'Record deleted successfully.',
             'delete_success' => 'Record deleted successfully.',
             'internal_error' => 'Internal server error.',
         ],
