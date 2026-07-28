@@ -316,7 +316,15 @@ Los paths y namespaces de salida son configurables en:
 config/api-scaffold.php
 ```
 
-El controlador generado usa claves configurables para el envelope de respuesta:
+Los controladores generados usan el helper de envelope del paquete:
+
+```php
+use CaminoDelDev\LaravelApiScaffold\Support\ResponseEnvelope;
+
+ResponseEnvelope::make(200, 'Registros obtenidos correctamente.', $data);
+```
+
+El helper centraliza la resolución de claves desde `config/api-scaffold.php`:
 
 ```php
 'envelope' => [
@@ -324,11 +332,12 @@ El controlador generado usa claves configurables para el envelope de respuesta:
         'code' => 'code',
         'message' => 'message',
         'data' => 'data',
+        'timestamp' => 'timestamp',
     ],
 ],
 ```
 
-Puedes adaptarlas a tu organización:
+Puedes adaptar estas claves a tu organización:
 
 ```php
 'envelope' => [
@@ -336,9 +345,38 @@ Puedes adaptarlas a tu organización:
         'code' => 'codigoRetorno',
         'message' => 'glosaRetorno',
         'data' => 'respuesta',
+        'timestamp' => 'timestamp',
     ],
 ],
 ```
+
+Por defecto se usa el helper interno del paquete. Si tu aplicación Laravel ya tiene un helper compatible, configúralo explícitamente:
+
+```php
+'response' => [
+    'helper' => App\Helpers\ResponseHelper::class,
+    'method' => 'returnResponse',
+    'include_timestamp' => false,
+],
+```
+
+El helper configurado debe exponer un método público y estático compatible con:
+
+```php
+returnResponse(int $code, string $message, mixed $data = []): array
+```
+
+Si `response.helper` es `null` o la clase/método configurado no está disponible, el paquete usa su implementación interna `ResponseEnvelope`.
+
+Para incluir timestamp en el envelope default del paquete, habilita:
+
+```php
+'response' => [
+    'include_timestamp' => true,
+],
+```
+
+Los controladores generados ahora dependen del paquete en runtime mediante `ResponseEnvelope`. Mantén `caminodeldev/laravel-api-scaffold` instalado mientras uses los controladores generados, o reemplaza las llamadas de respuesta generadas por el helper propio de tu aplicación antes de remover el paquete.
 
 ## Defaults de seguridad y preparación productiva
 
