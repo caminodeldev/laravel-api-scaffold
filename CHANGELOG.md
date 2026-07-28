@@ -29,6 +29,8 @@ This project follows semantic versioning once stable releases are published.
 - Generated Feature test stub for scaffolded APIs.
 - Unit tests for naming, sensitive column detection, file writing and MySQL inspection.
 - GitHub Actions workflow for Composer validation and PHPUnit.
+- English and Spanish README documentation.
+- Declared Composer compatibility with Laravel 13.
 
 ### Security
 
@@ -42,5 +44,6 @@ This project follows semantic versioning once stable releases are published.
 ### Notes
 
 - MySQL is the only supported database inspector in this release.
+- Laravel 13 support is declared through Composer constraints; validate generated code inside the target application before production usage.
 - Generated code must be reviewed before production usage.
 - Authorization and business rules are intentionally left to the consuming application.
