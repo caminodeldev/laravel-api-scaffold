@@ -403,7 +403,7 @@ Antes de usar código generado en producción, revisa al menos:
 - Reglas de autorización, policies o gates.
 - Reglas de los FormRequests generados.
 - Campos expuestos por los Resources generados.
-- Búsqueda, filtros y paginación.
+- Búsqueda, filtros, ordenamiento y paginación.
 - Operaciones de escritura y reglas de mass-assignment.
 - Logs y manejo de excepciones.
 - Índices de base de datos y límites de paginación.
