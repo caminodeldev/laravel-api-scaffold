@@ -120,6 +120,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Pagination
+    |--------------------------------------------------------------------------
+    |
+    | Generated index endpoints validate and clamp pagination values using these
+    | defaults. The legacy security keys are still read as fallbacks.
+    |
+    */
+
+    'pagination' => [
+        'default_per_page' => 15,
+        'max_per_page' => 100,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Query Defaults
+    |--------------------------------------------------------------------------
+    |
+    | Generated services use allow-lists for filters, search and sorting. This
+    | default sort is only applied when the generated resource allows the column.
+    |
+    */
+
+    'query' => [
+        'default_sort' => '-id',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Security Defaults
     |--------------------------------------------------------------------------
     |
