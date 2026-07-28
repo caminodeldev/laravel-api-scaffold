@@ -4,12 +4,21 @@ declare(strict_types=1);
 
 namespace {{ namespace }};
 
+use Illuminate\Pagination\LengthAwarePaginator;
+use {{ serviceNamespace }}\{{ service }};
 use Tests\TestCase;
 
 class {{ class }} extends TestCase
 {
     public function test_index_endpoint_responds_successfully(): void
     {
+        $this->mock({{ service }}::class, function ($mock): void {
+            $mock->shouldReceive('paginate')
+                ->once()
+                ->with([])
+                ->andReturn(new LengthAwarePaginator([], 0, 15));
+        });
+
         $response = $this->getJson(route('{{ routeName }}.index'));
 
         $response->assertStatus(200);

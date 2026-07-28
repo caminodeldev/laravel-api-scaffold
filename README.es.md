@@ -294,6 +294,8 @@ Por defecto, el paquete usa `v1` como prefijo porque `routes/api.php` normalment
 
 Los Feature tests generados usan rutas nombradas de Laravel, como `route('users.index')`, en vez de paths hardcodeados `/v1/...`. Esto mantiene los tests alineados con el prefijo real de Laravel, normalmente `/api/v1/...` cuando se cargan desde `routes/api.php`.
 
+Los smoke tests generados para `index` también mockean el método de paginación del Service generado. Así el test valida el cableado ruta/controller sin fallar cuando la base de datos de testing de la aplicación consumidora todavía no tiene migraciones ejecutadas.
+
 ## Configuración general
 
 Namespace default de controladores:
@@ -385,7 +387,7 @@ Alcance actual del MVP:
 - Reemplazo por recurso de bloques gestionados en `routes/scaffolded-api.php`.
 - Modo dry-run.
 - Modo force overwrite.
-- Scaffold básico de Feature test generado usando rutas nombradas.
+- Scaffold básico de Feature test generado usando rutas nombradas y mock del Service en `index`.
 
 Próximos pasos planificados después de `v0.1.1`:
 

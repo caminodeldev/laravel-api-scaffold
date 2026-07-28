@@ -11,6 +11,7 @@ This project follows semantic versioning once stable releases are published.
 - Generate API resource URIs from the table name by default, avoiding English-only pluralization such as `solicituds`.
 - Add explicit route parameter mapping for generated resources, so table-based URIs such as `solicitudes` still bind to controller parameters like `$solicitud`.
 - Generate Feature tests using Laravel named routes such as `route('solicitudes.index')` instead of hardcoded `/v1/...` paths.
+- Generate index smoke tests with a mocked Service paginator so they do not depend on the consumer application's testing database state.
 - Use configurable response envelope keys and messages consistently across generated `store`, `update` and `destroy` controller actions.
 - Replace managed blocks in `routes/scaffolded-api.php` per generated resource instead of appending duplicate blocks on regeneration.
 
@@ -23,7 +24,7 @@ This project follows semantic versioning once stable releases are published.
 ### Documentation
 
 - Documented table-based route URI generation and `--route-resource`.
-- Documented generated Feature test behavior with Laravel named routes.
+- Documented generated Feature test behavior with Laravel named routes and mocked Service pagination.
 - Clarified `/api/v1` behavior when generated routes are imported from Laravel's `routes/api.php`.
 
 

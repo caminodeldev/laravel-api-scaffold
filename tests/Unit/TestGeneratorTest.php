@@ -17,6 +17,9 @@ class TestGeneratorTest extends TestCase
 
         $contents = (new TestGenerator(new StubRenderer()))->generate($names);
 
+        $this->assertStringContainsString('use App\\Services\\SolicitudService;', $contents);
+        $this->assertStringContainsString('$this->mock(SolicitudService::class', $contents);
+        $this->assertStringContainsString('new LengthAwarePaginator([], 0, 15)', $contents);
         $this->assertStringContainsString("\$this->getJson(route('solicitudes.index'))", $contents);
         $this->assertStringNotContainsString("'/v1/solicituds'", $contents);
         $this->assertStringNotContainsString("'/v1/solicitudes'", $contents);

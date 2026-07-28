@@ -294,6 +294,8 @@ By default, the package uses `v1` as route prefix because `routes/api.php` is us
 
 Generated Feature tests use Laravel named routes, such as `route('users.index')`, instead of hardcoded `/v1/...` paths. This keeps tests aligned with the actual Laravel route prefix, commonly `/api/v1/...` when loaded from `routes/api.php`.
 
+Generated index smoke tests also mock the generated Service pagination method. This keeps the test focused on route/controller wiring and avoids failures when the consumer application's testing database has not been migrated yet.
+
 ## Configuration overview
 
 Default controller namespace:
@@ -385,7 +387,7 @@ Current MVP scope:
 - Per-resource replacement of managed route blocks in `routes/scaffolded-api.php`.
 - Dry-run mode.
 - Force overwrite mode.
-- Basic generated Feature test scaffold using named routes.
+- Basic generated Feature test scaffold using named routes and a mocked index Service call.
 
 Planned next steps after `v0.1.1`:
 
