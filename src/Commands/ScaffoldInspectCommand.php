@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CaminoDelDev\LaravelApiScaffold\Commands;
 
 use CaminoDelDev\LaravelApiScaffold\Database\Drivers\MySqlTableInspector;
+use CaminoDelDev\LaravelApiScaffold\Database\ColumnDefinition;
 use Illuminate\Console\Command;
 
 class ScaffoldInspectCommand extends Command
@@ -49,17 +50,25 @@ class ScaffoldInspectCommand extends Command
                 $flags[] = 'unique';
             }
 
-            $length = $column->length !== null ? "({$column->length})" : '';
-
             $this->line(sprintf(
-                '- %s %s%s %s',
+                '- %s %s %s',
                 $column->name,
-                $column->type,
-                $length,
+                $this->displayType($column),
                 implode(' ', $flags)
             ));
         }
 
         return self::SUCCESS;
+    }
+
+    private function displayType(ColumnDefinition $column): string
+    {
+        if ($column->allowedValues !== []) {
+            return sprintf('%s(%s)', $column->type, implode(', ', $column->allowedValues));
+        }
+
+        $length = $column->length !== null ? "({$column->length})" : '';
+
+        return "{$column->type}{$length}";
     }
 }
