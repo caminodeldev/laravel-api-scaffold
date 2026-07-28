@@ -17,14 +17,14 @@ class ControllerGeneratorTest extends TestCase
 
         $contents = (new ControllerGenerator(new StubRenderer()))->generate($names, crud: true, withDelete: true);
 
-        $this->assertSame(10, substr_count($contents, "config('api-scaffold.envelope.keys.code', 'code') =>"));
-        $this->assertSame(10, substr_count($contents, "config('api-scaffold.envelope.keys.message', 'message') =>"));
-        $this->assertSame(10, substr_count($contents, "config('api-scaffold.envelope.keys.data', 'data') =>"));
+        $this->assertStringContainsString('use CaminoDelDev\\LaravelApiScaffold\\Support\\ResponseEnvelope;', $contents);
+        $this->assertSame(10, substr_count($contents, 'ResponseEnvelope::make('));
 
         $this->assertStringContainsString("config('api-scaffold.envelope.messages.store_success'", $contents);
         $this->assertStringContainsString("config('api-scaffold.envelope.messages.update_success'", $contents);
         $this->assertStringContainsString("config('api-scaffold.envelope.messages.destroy_success'", $contents);
 
+        $this->assertStringNotContainsString("config('api-scaffold.envelope.keys.code'", $contents);
         $this->assertStringNotContainsString("'code' => 201", $contents);
         $this->assertStringNotContainsString("'message' => 'Record created successfully.'", $contents);
         $this->assertStringNotContainsString("'data' => new SolicitudResource", $contents);

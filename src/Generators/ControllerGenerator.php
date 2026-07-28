@@ -59,11 +59,13 @@ final readonly class ControllerGenerator
         try {
             \$this->{$names['modelVariable']}Service->delete(\${$names['modelVariable']});
 
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 200,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.destroy_success', 'Record deleted successfully.'),
-                config('api-scaffold.envelope.keys.data', 'data') => null,
-            ]);
+            return response()->json(
+                ResponseEnvelope::make(
+                    200,
+                    config('api-scaffold.envelope.messages.destroy_success', 'Record deleted successfully.'),
+                    null
+                )
+            );
         } catch (Throwable \$throwable) {
             Log::error('Error deleting record.', [
                 'controller' => self::class,
@@ -71,11 +73,14 @@ final readonly class ControllerGenerator
                 'error' => \$throwable->getMessage(),
             ]);
 
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 500,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
-                config('api-scaffold.envelope.keys.data', 'data') => null,
-            ], 500);
+            return response()->json(
+                ResponseEnvelope::make(
+                    500,
+                    config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
+                    null
+                ),
+                500
+            );
         }
     }
 PHP : '';
@@ -87,11 +92,14 @@ PHP : '';
         try {
             \${$names['modelVariable']} = \$this->{$names['modelVariable']}Service->create(\$request->validated());
 
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 201,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.store_success', 'Record created successfully.'),
-                config('api-scaffold.envelope.keys.data', 'data') => new {$names['resource']}(\${$names['modelVariable']}),
-            ], 201);
+            return response()->json(
+                ResponseEnvelope::make(
+                    201,
+                    config('api-scaffold.envelope.messages.store_success', 'Record created successfully.'),
+                    new {$names['resource']}(\${$names['modelVariable']})
+                ),
+                201
+            );
         } catch (Throwable \$throwable) {
             Log::error('Error creating record.', [
                 'controller' => self::class,
@@ -99,11 +107,14 @@ PHP : '';
                 'error' => \$throwable->getMessage(),
             ]);
 
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 500,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
-                config('api-scaffold.envelope.keys.data', 'data') => null,
-            ], 500);
+            return response()->json(
+                ResponseEnvelope::make(
+                    500,
+                    config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
+                    null
+                ),
+                500
+            );
         }
     }
 
@@ -115,11 +126,13 @@ PHP : '';
                 \$request->validated()
             );
 
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 200,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.update_success', 'Record updated successfully.'),
-                config('api-scaffold.envelope.keys.data', 'data') => new {$names['resource']}(\${$names['modelVariable']}),
-            ]);
+            return response()->json(
+                ResponseEnvelope::make(
+                    200,
+                    config('api-scaffold.envelope.messages.update_success', 'Record updated successfully.'),
+                    new {$names['resource']}(\${$names['modelVariable']})
+                )
+            );
         } catch (Throwable \$throwable) {
             Log::error('Error updating record.', [
                 'controller' => self::class,
@@ -127,11 +140,14 @@ PHP : '';
                 'error' => \$throwable->getMessage(),
             ]);
 
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 500,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
-                config('api-scaffold.envelope.keys.data', 'data') => null,
-            ], 500);
+            return response()->json(
+                ResponseEnvelope::make(
+                    500,
+                    config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
+                    null
+                ),
+                500
+            );
         }
     }
 {$delete}

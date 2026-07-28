@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace {{ namespace }};
 
 use App\Http\Controllers\Controller;
+use CaminoDelDev\LaravelApiScaffold\Support\ResponseEnvelope;
 use {{ requestNamespace }}\{{ indexRequest }};
 {{ storeUse }}{{ updateUse }}use {{ resourceNamespace }}\{{ resource }};
 use {{ modelNamespace }}\{{ model }};
@@ -25,11 +26,13 @@ class {{ class }} extends Controller
         try {
             $records = $this->{{ modelVariable }}Service->paginate($request->validated());
 
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 200,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.index_success', 'Records retrieved successfully.'),
-                config('api-scaffold.envelope.keys.data', 'data') => {{ resource }}::collection($records),
-            ]);
+            return response()->json(
+                ResponseEnvelope::make(
+                    200,
+                    config('api-scaffold.envelope.messages.index_success', 'Records retrieved successfully.'),
+                    {{ resource }}::collection($records)
+                )
+            );
         } catch (Throwable $throwable) {
             Log::error('Error retrieving records.', [
                 'controller' => self::class,
@@ -37,22 +40,27 @@ class {{ class }} extends Controller
                 'error' => $throwable->getMessage(),
             ]);
 
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 500,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
-                config('api-scaffold.envelope.keys.data', 'data') => null,
-            ], 500);
+            return response()->json(
+                ResponseEnvelope::make(
+                    500,
+                    config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
+                    null
+                ),
+                500
+            );
         }
     }
 
     public function show({{ model }} ${{ modelVariable }}): JsonResponse
     {
         try {
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 200,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.show_success', 'Record retrieved successfully.'),
-                config('api-scaffold.envelope.keys.data', 'data') => new {{ resource }}(${{ modelVariable }}),
-            ]);
+            return response()->json(
+                ResponseEnvelope::make(
+                    200,
+                    config('api-scaffold.envelope.messages.show_success', 'Record retrieved successfully.'),
+                    new {{ resource }}(${{ modelVariable }})
+                )
+            );
         } catch (Throwable $throwable) {
             Log::error('Error retrieving record.', [
                 'controller' => self::class,
@@ -60,11 +68,14 @@ class {{ class }} extends Controller
                 'error' => $throwable->getMessage(),
             ]);
 
-            return response()->json([
-                config('api-scaffold.envelope.keys.code', 'code') => 500,
-                config('api-scaffold.envelope.keys.message', 'message') => config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
-                config('api-scaffold.envelope.keys.data', 'data') => null,
-            ], 500);
+            return response()->json(
+                ResponseEnvelope::make(
+                    500,
+                    config('api-scaffold.envelope.messages.internal_error', 'Internal server error.'),
+                    null
+                ),
+                500
+            );
         }
     }
 {{ crudMethods }}
