@@ -38,7 +38,7 @@ Este paquete no:
 Release preparado actualmente:
 
 ```text
-v0.1.0
+v0.1.1
 ```
 
 Este release se enfoca en un scaffold API seguro y orientado primero a MySQL, con generación read-only como default recomendado y flags explícitos para escritura y eliminación.
@@ -435,11 +435,11 @@ La suite actual del paquete valida:
 
 Los releases se crean con tags Git. El paquete no define un campo `version` hardcodeado en `composer.json`; Packagist y Composer resuelven las versiones desde los tags del repositorio.
 
-Tag recomendado para el primer release:
+Tag recomendado para el patch release:
 
 ```bash
-git tag -a v0.1.0 -m "v0.1.0"
-git push origin v0.1.0
+git tag -a v0.1.1 -m "v0.1.1"
+git push origin v0.1.1
 ```
 
 ## Archivo de distribución

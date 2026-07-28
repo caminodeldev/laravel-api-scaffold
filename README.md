@@ -38,7 +38,7 @@ This package does not:
 Current prepared release:
 
 ```text
-v0.1.0
+v0.1.1
 ```
 
 This release focuses on a safe MySQL-first API scaffold, with read-only generation as the recommended default and explicit opt-in flags for write and delete operations.
@@ -435,11 +435,11 @@ Current package test coverage validates:
 
 Releases are created with Git tags. The package does not define a hardcoded `version` field in `composer.json`; Packagist and Composer resolve versions from repository tags.
 
-Recommended first release tag:
+Recommended patch release tag:
 
 ```bash
-git tag -a v0.1.0 -m "v0.1.0"
-git push origin v0.1.0
+git tag -a v0.1.1 -m "v0.1.1"
+git push origin v0.1.1
 ```
 
 ## Distribution archive

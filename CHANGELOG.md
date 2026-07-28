@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 This project follows semantic versioning once stable releases are published.
 
+## [0.1.1] - 2026-07-28
+
+### Fixed
+
+- Generate API resource URIs from the table name by default, avoiding English-only pluralization such as `solicituds`.
+- Add explicit route parameter mapping for generated resources, so table-based URIs such as `solicitudes` still bind to controller parameters like `$solicitud`.
+- Generate Feature tests using Laravel named routes such as `route('solicitudes.index')` instead of hardcoded `/v1/...` paths.
+- Use configurable response envelope keys and messages consistently across generated `store`, `update` and `destroy` controller actions.
+- Replace managed blocks in `routes/scaffolded-api.php` per generated resource instead of appending duplicate blocks on regeneration.
+
+### Added
+
+- `--route-resource` option for `scaffold:api` to customize the generated API resource URI.
+- MySQL enum value extraction in table inspection output.
+- Additional tests covering generated route URI behavior, route parameters, Feature test generation, controller envelope consistency and managed route block replacement.
+
+### Documentation
+
+- Documented table-based route URI generation and `--route-resource`.
+- Documented generated Feature test behavior with Laravel named routes.
+- Clarified `/api/v1` behavior when generated routes are imported from Laravel's `routes/api.php`.
+
+
 ## [0.1.0] - 2026-07-27
 
 ### Added
