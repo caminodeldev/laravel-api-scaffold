@@ -88,6 +88,7 @@ return [
             'code' => 'code',
             'message' => 'message',
             'data' => 'data',
+            'timestamp' => 'timestamp',
         ],
         'messages' => [
             'index_success' => 'Records retrieved successfully.',
@@ -98,6 +99,23 @@ return [
             'delete_success' => 'Record deleted successfully.',
             'internal_error' => 'Internal server error.',
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Response Helper
+    |--------------------------------------------------------------------------
+    |
+    | By default, generated controllers use the package ResponseEnvelope helper.
+    | You may configure an application helper with a compatible static method,
+    | such as App\Helpers\ResponseHelper::returnResponse().
+    |
+    */
+
+    'response' => [
+        'helper' => null,
+        'method' => 'returnResponse',
+        'include_timestamp' => false,
     ],
 
     /*

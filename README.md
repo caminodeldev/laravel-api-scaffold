@@ -31,14 +31,14 @@ This package does not:
 - Create database migrations.
 - Replace policies, gates, middleware or domain validation.
 - Guarantee that generated code is production-ready without review.
-- Support every database engine in `v0.1.1`.
+- Support every database engine in `v0.1.2`.
 
 ## Release status
 
 Current prepared release:
 
 ```text
-v0.1.1
+v0.1.2
 ```
 
 This release focuses on a safe MySQL-first API scaffold, with read-only generation as the recommended default and explicit opt-in flags for write and delete operations.
@@ -316,7 +316,15 @@ Default output paths and namespaces are configurable in:
 config/api-scaffold.php
 ```
 
-The generated controller uses configurable response envelope keys:
+Generated controllers use the package response envelope helper:
+
+```php
+use CaminoDelDev\LaravelApiScaffold\Support\ResponseEnvelope;
+
+ResponseEnvelope::make(200, 'Records retrieved successfully.', $data);
+```
+
+The helper centralizes response key resolution through `config/api-scaffold.php`:
 
 ```php
 'envelope' => [
@@ -324,11 +332,12 @@ The generated controller uses configurable response envelope keys:
         'code' => 'code',
         'message' => 'message',
         'data' => 'data',
+        'timestamp' => 'timestamp',
     ],
 ],
 ```
 
-You can customize them for your organization:
+You can customize these keys for your organization:
 
 ```php
 'envelope' => [
@@ -336,9 +345,38 @@ You can customize them for your organization:
         'code' => 'codigoRetorno',
         'message' => 'glosaRetorno',
         'data' => 'respuesta',
+        'timestamp' => 'timestamp',
     ],
 ],
 ```
+
+By default, the package helper is used. If your Laravel application already has a compatible helper, configure it explicitly:
+
+```php
+'response' => [
+    'helper' => App\Helpers\ResponseHelper::class,
+    'method' => 'returnResponse',
+    'include_timestamp' => false,
+],
+```
+
+The configured helper must expose a public static method compatible with:
+
+```php
+returnResponse(int $code, string $message, mixed $data = []): array
+```
+
+If `response.helper` is `null` or the configured class/method is unavailable, the package falls back to its internal `ResponseEnvelope` implementation.
+
+To include a timestamp in the default package envelope, enable:
+
+```php
+'response' => [
+    'include_timestamp' => true,
+],
+```
+
+Generated controllers now depend on the package at runtime through `ResponseEnvelope`. Keep `caminodeldev/laravel-api-scaffold` installed while using generated controllers, or replace the generated response calls with your application helper before removing the package.
 
 ## Security defaults and production readiness
 
