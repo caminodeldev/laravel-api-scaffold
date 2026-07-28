@@ -31,7 +31,7 @@ This package does not:
 - Create database migrations.
 - Replace policies, gates, middleware or domain validation.
 - Guarantee that generated code is production-ready without review.
-- Support every database engine in `v0.1.0`.
+- Support every database engine in `v0.1.1`.
 
 ## Release status
 
@@ -226,6 +226,7 @@ scaffold:api
   {table}
   {--connection=}
   {--model=}
+  {--route-resource=}
   {--read-only}
   {--crud}
   {--with-delete}
@@ -253,6 +254,14 @@ php artisan scaffold:api users --connection=mysql --crud --with-delete
 
 `--with-delete` requires `--crud`.
 
+Use a custom route resource URI when the table name should not be exposed directly:
+
+```bash
+php artisan scaffold:api cha_solicitudes --connection=mysql --model=Solicitud --route-resource=solicitudes
+```
+
+By default, the route resource URI is derived from the table name, not from English pluralization of the model name. For example, `solicitudes` with `--model=Solicitud` generates `solicitudes`, not `solicituds`.
+
 Overwrite existing generated files explicitly:
 
 ```bash
@@ -279,7 +288,11 @@ if (file_exists(__DIR__ . '/scaffolded-api.php')) {
 
 This import is idempotent and configurable in `config/api-scaffold.php`.
 
+Generated route blocks inside `routes/scaffolded-api.php` are managed per resource. Regenerating the same resource replaces the existing managed block instead of appending a duplicate block. Manual routes outside generated markers are preserved.
+
 By default, the package uses `v1` as route prefix because `routes/api.php` is usually already mounted under `/api` by Laravel. If your project loads the generated route file elsewhere, change `routes.prefix` to `api/v1` or any prefix you need.
+
+Generated Feature tests use Laravel named routes, such as `route('users.index')`, instead of hardcoded `/v1/...` paths. This keeps tests aligned with the actual Laravel route prefix, commonly `/api/v1/...` when loaded from `routes/api.php`.
 
 ## Configuration overview
 
@@ -369,11 +382,12 @@ Current MVP scope:
 - Thin controller generation with `try/catch`.
 - Dedicated route file generation.
 - Idempotent import into `routes/api.php`.
+- Per-resource replacement of managed route blocks in `routes/scaffolded-api.php`.
 - Dry-run mode.
 - Force overwrite mode.
-- Basic generated Feature test scaffold.
+- Basic generated Feature test scaffold using named routes.
 
-Planned next steps after `v0.1.0`:
+Planned next steps after `v0.1.1`:
 
 - PostgreSQL support.
 - Optional policy generation.
@@ -414,6 +428,8 @@ Current package test coverage validates:
 - File writing and dry-run behavior.
 - MySQL table inspection with fixtures.
 - Name resolution.
+- Generated route URI, route parameter and Feature test behavior.
+- Controller response envelope consistency.
 
 ## Versioning
 

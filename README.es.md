@@ -31,7 +31,7 @@ Este paquete no:
 - Crea migraciones de base de datos.
 - Reemplaza policies, gates, middleware ni validaciones de dominio.
 - Garantiza que el código generado esté listo para producción sin revisión.
-- Soporta todos los motores de base de datos en `v0.1.0`.
+- Soporta todos los motores de base de datos en `v0.1.1`.
 
 ## Estado de release
 
@@ -226,6 +226,7 @@ scaffold:api
   {table}
   {--connection=}
   {--model=}
+  {--route-resource=}
   {--read-only}
   {--crud}
   {--with-delete}
@@ -253,6 +254,14 @@ php artisan scaffold:api users --connection=mysql --crud --with-delete
 
 `--with-delete` requiere `--crud`.
 
+Usa una URI de recurso personalizada cuando no quieras exponer directamente el nombre de tabla:
+
+```bash
+php artisan scaffold:api cha_solicitudes --connection=mysql --model=Solicitud --route-resource=solicitudes
+```
+
+Por defecto, la URI del recurso se deriva desde el nombre de tabla, no desde la pluralización inglesa del modelo. Por ejemplo, `solicitudes` con `--model=Solicitud` genera `solicitudes`, no `solicituds`.
+
 Sobrescribir archivos generados existentes explícitamente:
 
 ```bash
@@ -279,7 +288,11 @@ if (file_exists(__DIR__ . '/scaffolded-api.php')) {
 
 Este import es idempotente y configurable en `config/api-scaffold.php`.
 
+Los bloques de rutas generadas dentro de `routes/scaffolded-api.php` se administran por recurso. Al regenerar el mismo recurso, el paquete reemplaza el bloque gestionado existente en vez de agregar un duplicado. Las rutas manuales fuera de los marcadores generados se preservan.
+
 Por defecto, el paquete usa `v1` como prefijo porque `routes/api.php` normalmente ya está montado bajo `/api` por Laravel. Si tu proyecto carga el archivo generado desde otro lugar, cambia `routes.prefix` a `api/v1` o al prefijo que necesites.
+
+Los Feature tests generados usan rutas nombradas de Laravel, como `route('users.index')`, en vez de paths hardcodeados `/v1/...`. Esto mantiene los tests alineados con el prefijo real de Laravel, normalmente `/api/v1/...` cuando se cargan desde `routes/api.php`.
 
 ## Configuración general
 
@@ -369,11 +382,12 @@ Alcance actual del MVP:
 - Generación de controladores delgados con `try/catch`.
 - Generación de archivo dedicado de rutas.
 - Import idempotente en `routes/api.php`.
+- Reemplazo por recurso de bloques gestionados en `routes/scaffolded-api.php`.
 - Modo dry-run.
 - Modo force overwrite.
-- Scaffold básico de Feature test generado.
+- Scaffold básico de Feature test generado usando rutas nombradas.
 
-Próximos pasos planificados después de `v0.1.0`:
+Próximos pasos planificados después de `v0.1.1`:
 
 - Soporte PostgreSQL.
 - Generación opcional de policies.
@@ -414,6 +428,8 @@ La suite actual del paquete valida:
 - Escritura de archivos y comportamiento dry-run.
 - Inspección MySQL con fixtures.
 - Resolución de nombres.
+- URI de rutas generadas, parámetro de ruta y comportamiento de Feature test.
+- Consistencia del envelope de respuesta del controlador.
 
 ## Versionamiento
 
