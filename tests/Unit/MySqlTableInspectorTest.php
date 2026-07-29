@@ -162,4 +162,35 @@ class MySqlTableInspectorTest extends TestCase
         $this->assertSame(['ingresada', 'en_revision', 'cerrada'], $table->columns[0]->allowedValues);
     }
 
+
+    public function test_it_maps_mysql_numeric_display_length_from_column_type(): void
+    {
+        $columns = [
+            (object) [
+                'name' => 'requiere_revision_manual',
+                'type' => 'tinyint',
+                'column_type' => 'tinyint(1)',
+                'length_value' => null,
+                'nullable_value' => 'NO',
+                'column_key' => '',
+                'extra_value' => '',
+                'default_value' => '0',
+            ],
+        ];
+
+        $database = $this->createMock(DatabaseManager::class);
+        $connection = $this->createMock(Connection::class);
+
+        $database->method('getDefaultConnection')->willReturn('mysql');
+        $database->method('connection')->with('mysql')->willReturn($connection);
+
+        $connection->method('getDriverName')->willReturn('mysql');
+        $connection->method('getDatabaseName')->willReturn('testing');
+        $connection->method('select')->willReturn($columns);
+
+        $table = (new MySqlTableInspector($database))->inspect('solicitudes');
+
+        $this->assertSame(1, $table->columns[0]->length);
+    }
+
 }

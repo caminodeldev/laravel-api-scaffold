@@ -95,7 +95,7 @@ class ScaffoldApiCommand extends Command
 
         if (config('api-scaffold.generation.generate_form_requests', true)) {
             $requestBase = $this->path('requests', $names['model']);
-            $files[$requestBase . DIRECTORY_SEPARATOR . "{$names['indexRequest']}.php"] = $requestGenerator->generateIndex($names);
+            $files[$requestBase . DIRECTORY_SEPARATOR . "{$names['indexRequest']}.php"] = $requestGenerator->generateIndex($definition, $names);
 
             if ($crud) {
                 $files[$requestBase . DIRECTORY_SEPARATOR . "{$names['storeRequest']}.php"] = $requestGenerator->generateStore($definition, $names);
@@ -104,7 +104,7 @@ class ScaffoldApiCommand extends Command
         }
 
         if (config('api-scaffold.generation.generate_service', true)) {
-            $files[$this->path('services', "{$names['service']}.php")] = $serviceGenerator->generate($names, $crud, $withDelete);
+            $files[$this->path('services', "{$names['service']}.php")] = $serviceGenerator->generate($definition, $names, $crud, $withDelete);
         }
 
         $files[$this->path('controllers', "{$names['controller']}.php")] = $controllerGenerator->generate($names, $crud, $withDelete);

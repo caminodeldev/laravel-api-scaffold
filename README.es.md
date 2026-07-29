@@ -296,6 +296,54 @@ Los Feature tests generados usan rutas nombradas de Laravel, como `route('users.
 
 Los smoke tests generados para `index` también mockean el método de paginación del Service generado. Así el test valida el cableado ruta/controller sin fallar cuando la base de datos de testing de la aplicación consumidora todavía no tiene migraciones ejecutadas.
 
+## Comportamiento de consulta generado
+
+Desde `v0.2.0`, los endpoints `index` generados soportan consultas seguras mediante allow-lists generadas en la capa Service.
+
+Parámetros soportados:
+
+```http
+GET /api/v1/solicitudes?page=1&per_page=15
+GET /api/v1/solicitudes?perPage=15
+GET /api/v1/solicitudes?estado=ingresada
+GET /api/v1/solicitudes?filter[estado]=ingresada
+GET /api/v1/solicitudes?search=beneficio
+GET /api/v1/solicitudes?sort=-id
+GET /api/v1/solicitudes?sort=estado,-id
+```
+
+El Service generado contiene allow-lists explícitas:
+
+```php
+private const FILTERABLE = [
+    // generado desde columnas escalares seguras
+];
+
+private const SEARCHABLE = [
+    // generado desde columnas de texto seguras
+];
+
+private const SORTABLE = [
+    // generado desde columnas escalares seguras
+];
+```
+
+Las columnas de filtro u ordenamiento no permitidas se ignoran en el Service generado en vez de pasarse directamente al query builder.
+
+La paginación es configurable:
+
+```php
+'pagination' => [
+    'default_per_page' => 15,
+    'max_per_page' => 100,
+],
+```
+
+El request generado acepta `per_page` y `perPage` por compatibilidad.
+
+Los FormRequests de escritura generados ahora usan metadata más rica cuando está disponible, incluyendo largo de strings, valores enum, columnas `tinyint(1)` tipo boolean y reglas `unique` para store requests.
+
+
 ## Configuración general
 
 Namespace default de controladores:
@@ -403,7 +451,7 @@ Antes de usar código generado en producción, revisa al menos:
 - Reglas de autorización, policies o gates.
 - Reglas de los FormRequests generados.
 - Campos expuestos por los Resources generados.
-- Búsqueda, filtros y paginación.
+- Búsqueda, filtros, ordenamiento y paginación.
 - Operaciones de escritura y reglas de mass-assignment.
 - Logs y manejo de excepciones.
 - Índices de base de datos y límites de paginación.

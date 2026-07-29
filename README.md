@@ -296,6 +296,54 @@ Generated Feature tests use Laravel named routes, such as `route('users.index')`
 
 Generated index smoke tests also mock the generated Service pagination method. This keeps the test focused on route/controller wiring and avoids failures when the consumer application's testing database has not been migrated yet.
 
+## Generated query behavior
+
+Starting with `v0.2.0`, generated `index` endpoints support safe query behavior through generated allow-lists in the Service layer.
+
+Supported query parameters:
+
+```http
+GET /api/v1/solicitudes?page=1&per_page=15
+GET /api/v1/solicitudes?perPage=15
+GET /api/v1/solicitudes?estado=ingresada
+GET /api/v1/solicitudes?filter[estado]=ingresada
+GET /api/v1/solicitudes?search=beneficio
+GET /api/v1/solicitudes?sort=-id
+GET /api/v1/solicitudes?sort=estado,-id
+```
+
+The generated Service contains explicit allow-lists:
+
+```php
+private const FILTERABLE = [
+    // generated from safe scalar columns
+];
+
+private const SEARCHABLE = [
+    // generated from safe text-like columns
+];
+
+private const SORTABLE = [
+    // generated from safe scalar columns
+];
+```
+
+Invalid filter or sort columns are ignored by the generated Service instead of being passed blindly to the query builder.
+
+Pagination is configurable:
+
+```php
+'pagination' => [
+    'default_per_page' => 15,
+    'max_per_page' => 100,
+],
+```
+
+The generated request accepts both `per_page` and `perPage` for compatibility.
+
+Generated write FormRequests now use richer column metadata when available, including string length, enum values, boolean-like `tinyint(1)` columns and unique rules for store requests.
+
+
 ## Configuration overview
 
 Default controller namespace:
@@ -403,7 +451,7 @@ Before using generated code in production, review at least:
 - Authorization rules, policies or gates.
 - Generated FormRequest rules.
 - Generated Resource fields.
-- Search, filter and pagination behavior.
+- Search, filter, sorting and pagination behavior.
 - Write operations and mass-assignment rules.
 - Logs and exception handling.
 - Database indexes and pagination limits.
@@ -426,13 +474,14 @@ Current MVP scope:
 - Dry-run mode.
 - Force overwrite mode.
 - Basic generated Feature test scaffold using named routes and a mocked index Service call.
+- Safe generated filters, search, sorting and paginated index services.
+- Smarter generated FormRequest rules based on MySQL metadata.
 
-Planned next steps after `v0.1.1`:
+Planned next steps after `v0.2.0`:
 
 - PostgreSQL support.
 - Optional policy generation.
 - Real diff mode.
-- Stronger generated Feature tests for CRUD flows.
 - Optional extraction of the response envelope into a dedicated package.
 - Expanded CI matrix for framework-version-specific validation.
 
@@ -470,16 +519,19 @@ Current package test coverage validates:
 - Name resolution.
 - Generated route URI, route parameter and Feature test behavior.
 - Controller response envelope consistency.
+- ResponseEnvelope helper behavior.
+- Generated query allow-lists, pagination, search and sorting.
+- Generated FormRequest validation rules.
 
 ## Versioning
 
 Releases are created with Git tags. The package does not define a hardcoded `version` field in `composer.json`; Packagist and Composer resolve versions from repository tags.
 
-Recommended patch release tag:
+Recommended release tag example:
 
 ```bash
-git tag -a v0.1.1 -m "v0.1.1"
-git push origin v0.1.1
+git tag -a v0.2.0 -m "v0.2.0"
+git push origin v0.2.0
 ```
 
 ## Distribution archive

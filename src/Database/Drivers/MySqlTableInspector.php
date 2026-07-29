@@ -67,7 +67,7 @@ final readonly class MySqlTableInspector implements TableInspector
                 fn (object $column): ColumnDefinition => new ColumnDefinition(
                     name: (string) $column->name,
                     type: (string) $column->type,
-                    length: $column->length_value !== null ? (int) $column->length_value : null,
+                    length: $this->columnLength($column->length_value ?? null, $column->column_type ?? null),
                     nullable: strtoupper((string) $column->nullable_value) === 'YES',
                     primary: (string) $column->column_key === 'PRI',
                     autoIncrement: str_contains(strtolower((string) $column->extra_value), 'auto_increment'),
@@ -78,6 +78,23 @@ final readonly class MySqlTableInspector implements TableInspector
                 $columns
             )
         );
+    }
+
+    private function columnLength(mixed $lengthValue, mixed $columnType): ?int
+    {
+        if ($lengthValue !== null) {
+            return (int) $lengthValue;
+        }
+
+        if (! is_string($columnType)) {
+            return null;
+        }
+
+        if (preg_match('/^[a-z]+\((\d+)\)/i', $columnType, $matches) !== 1) {
+            return null;
+        }
+
+        return (int) $matches[1];
     }
 
     /**

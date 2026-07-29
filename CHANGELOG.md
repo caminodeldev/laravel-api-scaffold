@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 This project follows semantic versioning once stable releases are published.
 
+## [0.2.0] - 2026-07-28
+
+### Added
+
+- Generated Service allow-lists for safe exact filters, search columns and sortable columns.
+- Generated index support for direct filters such as `?estado=ingresada`.
+- Generated index support for nested filters such as `?filter[estado]=ingresada`.
+- Generated index support for `search` across safe text-like columns.
+- Generated index support for comma-separated safe sorting such as `?sort=estado,-id`.
+- Dedicated `pagination` configuration with `default_per_page` and `max_per_page`.
+- Dedicated `query.default_sort` configuration.
+- `QueryColumnResolver` to derive safe query columns from inspected metadata and security configuration.
+- Unit tests for generated Service query behavior, index request filters and query column resolution.
+
+### Changed
+
+- Generated Services now apply filters, search, sorting and pagination through explicit allow-lists.
+- Generated index requests now validate `per_page`, `perPage`, `search`, `sort`, `filter` and safe generated filter fields.
+- Generated write FormRequests now include enum `in:` validation when MySQL enum values are available.
+- Generated store FormRequests now include `unique:table,column` rules for unique writable columns.
+- Generated validation treats MySQL `tinyint(1)` columns as booleans when column metadata is available.
+- Generated models cast MySQL `tinyint(1)` columns as booleans.
+
+### Documentation
+
+- Documented generated query behavior for filters, search, sorting and pagination.
+- Documented pagination configuration and generated query allow-lists.
+
+
 ## [0.1.2] - 2026-07-28
 
 ### Added
