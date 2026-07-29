@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace CaminoDelDev\LaravelApiScaffold\Commands;
 
-use CaminoDelDev\LaravelApiScaffold\Database\Drivers\MySqlTableInspector;
+use CaminoDelDev\LaravelApiScaffold\Database\TableInspectorFactory;
 use CaminoDelDev\LaravelApiScaffold\Generators\ControllerGenerator;
 use CaminoDelDev\LaravelApiScaffold\Generators\ModelGenerator;
 use CaminoDelDev\LaravelApiScaffold\Generators\RequestGenerator;
@@ -36,7 +36,7 @@ class ScaffoldApiCommand extends Command
     protected $description = 'Generate a clean, secure and configurable Laravel API scaffold from a database table.';
 
     public function handle(
-        MySqlTableInspector $inspector,
+        TableInspectorFactory $inspectorFactory,
         NameResolver $nameResolver,
         ModelGenerator $modelGenerator,
         ResourceGenerator $resourceGenerator,
@@ -80,7 +80,7 @@ class ScaffoldApiCommand extends Command
             $this->warn('Delete endpoint is being generated. Ensure authorization, auditing and rollback strategy are defined.');
         }
 
-        $definition = $inspector->inspect($table, $connection);
+        $definition = $inspectorFactory->inspect($table, $connection);
         $names = $nameResolver->resolve($table, $model, $routeResource);
 
         $files = [];

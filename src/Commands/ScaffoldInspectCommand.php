@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace CaminoDelDev\LaravelApiScaffold\Commands;
 
-use CaminoDelDev\LaravelApiScaffold\Database\Drivers\MySqlTableInspector;
+use CaminoDelDev\LaravelApiScaffold\Database\TableInspectorFactory;
 use CaminoDelDev\LaravelApiScaffold\Database\ColumnDefinition;
 use Illuminate\Console\Command;
 
@@ -16,12 +16,12 @@ class ScaffoldInspectCommand extends Command
 
     protected $description = 'Inspect a database table and print the detected structure.';
 
-    public function handle(MySqlTableInspector $inspector): int
+    public function handle(TableInspectorFactory $inspectorFactory): int
     {
         $table = (string) $this->argument('table');
         $connection = $this->option('connection') ? (string) $this->option('connection') : null;
 
-        $definition = $inspector->inspect($table, $connection);
+        $definition = $inspectorFactory->inspect($table, $connection);
 
         $this->info("Table: {$definition->table}");
         $this->line("Connection: {$definition->connection}");

@@ -109,7 +109,7 @@ class MySqlTableInspectorTest extends TestCase
         $connection->method('getDriverName')->willReturn('pgsql');
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('only supports mysql connections');
+        $this->expectExceptionMessage('only supports mysql or mariadb connections');
 
         (new MySqlTableInspector($database))->inspect('users');
     }
