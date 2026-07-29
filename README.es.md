@@ -31,17 +31,17 @@ Este paquete no:
 - Crea migraciones de base de datos.
 - Reemplaza policies, gates, middleware ni validaciones de dominio.
 - Garantiza que el código generado esté listo para producción sin revisión.
-- Soporta todos los motores de base de datos en `v0.1.2`.
+- Soporta todos los motores de base de datos. `v0.3.0` soporta MySQL/MariaDB y PostgreSQL para tablas API Laravel comunes.
 
 ## Estado de release
 
 Release preparado actualmente:
 
 ```text
-v0.1.2
+v0.3.0
 ```
 
-Este release se enfoca en un scaffold API seguro y orientado primero a MySQL, con generación read-only como default recomendado y flags explícitos para escritura y eliminación.
+Este release se enfoca en un scaffold API seguro y multi-driver para MySQL/MariaDB y PostgreSQL, con generación read-only como default recomendado y flags explícitos para escritura y eliminación.
 
 Revisa [`CHANGELOG.md`](CHANGELOG.md) para las notas de release.
 
@@ -50,7 +50,7 @@ Revisa [`CHANGELOG.md`](CHANGELOG.md) para las notas de release.
 - PHP 8.2 o superior.
 - Laravel 10, 11, 12 o 13.
 - Una conexión de base de datos configurada.
-- Soporte MySQL para el MVP actual.
+- Soporte de conexión MySQL/MariaDB o PostgreSQL.
 
 La compatibilidad con Laravel 13 queda declarada en las restricciones Composer y CI incluye PHP 8.4. Siempre ejecuta la suite de pruebas del paquete y valida el código generado dentro de tu aplicación Laravel objetivo antes de usarlo en producción.
 
@@ -114,6 +114,7 @@ Comienza inspeccionando la tabla:
 
 ```bash
 php artisan scaffold:inspect users --connection=mysql
+php artisan scaffold:inspect public.solicitudes --connection=pgsql
 ```
 
 Previsualiza la API generada sin escribir archivos:
@@ -176,6 +177,7 @@ El paquete registra actualmente estos comandos:
 
 ```bash
 php artisan scaffold:inspect users --connection=mysql
+php artisan scaffold:inspect public.solicitudes --connection=pgsql
 ```
 
 Firma:
@@ -460,7 +462,8 @@ Antes de usar código generado en producción, revisa al menos:
 
 Alcance actual del MVP:
 
-- Inspección de tablas MySQL.
+- Inspección de tablas MySQL/MariaDB.
+- Inspección de tablas PostgreSQL para tablas API Laravel comunes.
 - Generación segura de modelos Eloquent.
 - Generación de APIs read-only.
 - Generación opcional CRUD mediante flags explícitos.
