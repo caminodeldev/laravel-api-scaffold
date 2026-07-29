@@ -16,9 +16,10 @@ final class NameResolver
     public function resolve(string $table, ?string $model = null, ?string $routeResource = null): array
     {
         $table = trim($table);
-        $modelName = $model ?: Str::studly(Str::singular($table));
+        $baseTable = $this->baseTableName($table);
+        $modelName = $model ?: Str::studly(Str::singular($baseTable));
         $modelVariable = Str::camel($modelName);
-        $route = $this->normalizeRouteResource($routeResource ?: $table);
+        $route = $this->normalizeRouteResource($routeResource ?: $baseTable);
 
         return [
             'table' => $table,
@@ -37,6 +38,17 @@ final class NameResolver
             'routeParameter' => $modelVariable,
             'test' => "{$modelName}ApiTest",
         ];
+    }
+
+    private function baseTableName(string $table): string
+    {
+        if (! str_contains($table, '.')) {
+            return $table;
+        }
+
+        $segments = explode('.', $table);
+
+        return end($segments) ?: $table;
     }
 
     private function normalizeRouteResource(string $routeResource): string

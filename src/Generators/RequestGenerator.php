@@ -100,8 +100,9 @@ final readonly class RequestGenerator
             'tinyint' => $column->length === 1 ? 'boolean' : 'integer',
             'decimal', 'double', 'float' => 'numeric',
             'boolean', 'bool' => 'boolean',
+            'uuid' => 'uuid',
             'date' => 'date',
-            'datetime', 'timestamp' => 'date',
+            'datetime', 'timestamp', 'time' => 'date',
             'json' => 'array',
             default => 'string',
         };
@@ -115,9 +116,18 @@ final readonly class RequestGenerator
         }
 
         if ($includeUnique && $column->unique && ! $column->isPrimaryKey()) {
-            $rules[] = "unique:{$table->table},{$column->name}";
+            $rules[] = 'unique:' . $this->uniqueTableName($table) . ",{$column->name}";
         }
 
         return '[' . implode(', ', array_map(static fn (string $rule): string => "'{$rule}'", $rules)) . ']';
+    }
+
+    private function uniqueTableName(TableDefinition $table): string
+    {
+        if ($table->driver === 'pgsql' && str_contains($table->table, '.')) {
+            return "{$table->connection}.{$table->table}";
+        }
+
+        return $table->table;
     }
 }

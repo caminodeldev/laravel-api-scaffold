@@ -22,9 +22,9 @@ final readonly class MySqlTableInspector implements TableInspector
         $connectionName = $connection ?: $this->database->getDefaultConnection();
         $db = $this->database->connection($connectionName);
 
-        if ($db->getDriverName() !== 'mysql') {
+        if (! in_array($db->getDriverName(), ['mysql', 'mariadb'], true)) {
             throw new RuntimeException(sprintf(
-                'The MySQL inspector only supports mysql connections. [%s] uses [%s].',
+                'The MySQL inspector only supports mysql or mariadb connections. [%s] uses [%s].',
                 $connectionName,
                 $db->getDriverName()
             ));

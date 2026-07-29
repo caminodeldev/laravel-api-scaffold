@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 This project follows semantic versioning once stable releases are published.
 
+## [0.3.0] - 2026-07-28
+
+### Added
+
+- PostgreSQL table inspection through a new `PostgresTableInspector`.
+- `TableInspectorFactory` to select the correct inspector from the Laravel connection driver.
+- Support for `pgsql` connections in `scaffold:inspect`, `scaffold:model` and `scaffold:api`.
+- PostgreSQL schema-qualified table names such as `public.solicitudes` and `tramites.solicitudes`.
+- PostgreSQL metadata mapping for common Laravel API table columns: `uuid`, `boolean`, `jsonb`, `numeric`, `timestamp`, `bigint`, `integer`, `varchar`, `text` and user-defined enum types.
+- PostgreSQL enum value extraction for generated `in:` FormRequest rules.
+- PostgreSQL single-column unique index detection for generated `unique:table,column` rules.
+- PostgreSQL identity and `bigserial`/`serial` auto-increment detection.
+- Unit tests for PostgreSQL table inspection, driver factory resolution and generator behavior with PostgreSQL metadata.
+
+### Changed
+
+- Console commands now resolve table inspectors through the driver-aware factory instead of depending directly on the MySQL inspector.
+- Schema-qualified table names use the base table name for generated model, route and test names while keeping the schema-qualified table in the generated Eloquent model.
+- Generated validation now treats PostgreSQL `uuid` columns as Laravel `uuid` validation rules.
+- Generated query allow-lists support PostgreSQL `uuid` columns for exact filtering and sorting.
+- MySQL inspector accepts `mariadb` as a MySQL-compatible driver.
+
+### Documentation
+
+- Documented MySQL and PostgreSQL support.
+- Documented PostgreSQL schema-qualified table usage.
+- Documented PostgreSQL validation expectations and current scope.
+
 ## [0.2.0] - 2026-07-28
 
 ### Added

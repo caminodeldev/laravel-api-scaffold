@@ -31,17 +31,17 @@ This package does not:
 - Create database migrations.
 - Replace policies, gates, middleware or domain validation.
 - Guarantee that generated code is production-ready without review.
-- Support every database engine in `v0.1.2`.
+- Support every database engine. `v0.3.0` supports MySQL/MariaDB and PostgreSQL for common Laravel API tables.
 
 ## Release status
 
 Current prepared release:
 
 ```text
-v0.1.2
+v0.3.0
 ```
 
-This release focuses on a safe MySQL-first API scaffold, with read-only generation as the recommended default and explicit opt-in flags for write and delete operations.
+This release focuses on a safe multi-driver scaffold for MySQL/MariaDB and PostgreSQL, with read-only generation as the recommended default and explicit opt-in flags for write and delete operations.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for release notes.
 
@@ -50,7 +50,7 @@ See [`CHANGELOG.md`](CHANGELOG.md) for release notes.
 - PHP 8.2 or higher.
 - Laravel 10, 11, 12 or 13.
 - A configured database connection.
-- MySQL support for the current MVP.
+- MySQL/MariaDB or PostgreSQL connection support.
 
 Laravel 13 compatibility is declared in Composer constraints and CI includes PHP 8.4. Always run the package test suite and validate generated code inside your target Laravel application before using it in production.
 
@@ -114,6 +114,7 @@ Start by inspecting the table:
 
 ```bash
 php artisan scaffold:inspect users --connection=mysql
+php artisan scaffold:inspect public.solicitudes --connection=pgsql
 ```
 
 Preview the generated API before writing files:
@@ -176,6 +177,7 @@ The package currently registers these commands:
 
 ```bash
 php artisan scaffold:inspect users --connection=mysql
+php artisan scaffold:inspect public.solicitudes --connection=pgsql
 ```
 
 Signature:
@@ -460,7 +462,8 @@ Before using generated code in production, review at least:
 
 Current MVP scope:
 
-- MySQL table inspection.
+- MySQL/MariaDB table inspection.
+- PostgreSQL table inspection for common Laravel API tables.
 - Safe Eloquent model generation.
 - Read-only API generation.
 - Optional CRUD generation via explicit flags.
@@ -475,11 +478,10 @@ Current MVP scope:
 - Force overwrite mode.
 - Basic generated Feature test scaffold using named routes and a mocked index Service call.
 - Safe generated filters, search, sorting and paginated index services.
-- Smarter generated FormRequest rules based on MySQL metadata.
+- Smarter generated FormRequest rules based on MySQL and PostgreSQL metadata.
 
-Planned next steps after `v0.2.0`:
+Planned next steps after `v0.3.0`:
 
-- PostgreSQL support.
 - Optional policy generation.
 - Real diff mode.
 - Optional extraction of the response envelope into a dedicated package.
@@ -516,6 +518,7 @@ Current package test coverage validates:
 - Sensitive column detection.
 - File writing and dry-run behavior.
 - MySQL table inspection with fixtures.
+- PostgreSQL table inspection and schema-qualified table names.
 - Name resolution.
 - Generated route URI, route parameter and Feature test behavior.
 - Controller response envelope consistency.

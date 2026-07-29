@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace CaminoDelDev\LaravelApiScaffold\Commands;
 
-use CaminoDelDev\LaravelApiScaffold\Database\Drivers\MySqlTableInspector;
+use CaminoDelDev\LaravelApiScaffold\Database\TableInspectorFactory;
 use CaminoDelDev\LaravelApiScaffold\Generators\ModelGenerator;
 use CaminoDelDev\LaravelApiScaffold\Naming\NameResolver;
 use CaminoDelDev\LaravelApiScaffold\Support\FileWriter;
@@ -22,7 +22,7 @@ class ScaffoldModelCommand extends Command
     protected $description = 'Generate a safe Eloquent model from a database table.';
 
     public function handle(
-        MySqlTableInspector $inspector,
+        TableInspectorFactory $inspectorFactory,
         NameResolver $nameResolver,
         ModelGenerator $modelGenerator,
         FileWriter $fileWriter,
@@ -33,7 +33,7 @@ class ScaffoldModelCommand extends Command
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
 
-        $definition = $inspector->inspect($table, $connection);
+        $definition = $inspectorFactory->inspect($table, $connection);
         $names = $nameResolver->resolve($table, $model);
 
         $path = rtrim(config('api-scaffold.paths.models'), DIRECTORY_SEPARATOR)

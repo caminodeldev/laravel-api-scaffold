@@ -120,6 +120,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Database Introspection
+    |--------------------------------------------------------------------------
+    |
+    | PostgreSQL supports schemas. When a table is not passed as schema.table,
+    | the inspector uses this schema by default.
+    |
+    */
+
+    'database' => [
+        'default_schema' => 'public',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Pagination
     |--------------------------------------------------------------------------
     |

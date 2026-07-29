@@ -41,4 +41,14 @@ class NameResolverTest extends TestCase
         $this->assertSame('solicitudes', $names['routeParameterResource']);
         $this->assertSame('solicitud', $names['routeParameter']);
     }
+
+    public function test_it_uses_base_table_name_for_schema_qualified_tables(): void
+    {
+        $names = (new NameResolver())->resolve('public.solicitudes');
+
+        $this->assertSame('Solicitude', $names['model']);
+        $this->assertSame('solicitudes', $names['route']);
+        $this->assertSame('solicitudes', $names['routeName']);
+        $this->assertSame('solicitudes', $names['routeParameterResource']);
+    }
 }
