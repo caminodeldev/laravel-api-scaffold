@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CaminoDelDev\LaravelApiScaffold\Tests\Unit;
 
 use CaminoDelDev\LaravelApiScaffold\Database\Drivers\MySqlTableInspector;
+use CaminoDelDev\LaravelApiScaffold\Database\Drivers\PostgresTableInspector;
 use CaminoDelDev\LaravelApiScaffold\Database\TableInspectorFactory;
 use CaminoDelDev\LaravelApiScaffold\Tests\TestCase;
 use Illuminate\Database\Connection;
@@ -40,6 +41,21 @@ class TableInspectorFactoryTest extends TestCase
         $inspector = (new TableInspectorFactory($database))->make('tenant_mariadb');
 
         $this->assertInstanceOf(MySqlTableInspector::class, $inspector);
+    }
+
+
+    public function test_it_resolves_postgres_inspector_from_connection_driver(): void
+    {
+        $database = $this->createMock(DatabaseManager::class);
+        $connection = $this->createMock(Connection::class);
+
+        $database->method('connection')->with('pgsql')->willReturn($connection);
+
+        $connection->method('getDriverName')->willReturn('pgsql');
+
+        $inspector = (new TableInspectorFactory($database))->make('pgsql');
+
+        $this->assertInstanceOf(PostgresTableInspector::class, $inspector);
     }
 
     public function test_it_rejects_unsupported_drivers(): void

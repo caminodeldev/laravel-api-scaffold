@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CaminoDelDev\LaravelApiScaffold\Database;
 
 use CaminoDelDev\LaravelApiScaffold\Database\Drivers\MySqlTableInspector;
+use CaminoDelDev\LaravelApiScaffold\Database\Drivers\PostgresTableInspector;
 use Illuminate\Database\DatabaseManager;
 use RuntimeException;
 
@@ -27,8 +28,9 @@ final readonly class TableInspectorFactory
 
         return match ($driver) {
             'mysql', 'mariadb' => new MySqlTableInspector($this->database),
+            'pgsql' => new PostgresTableInspector($this->database),
             default => throw new RuntimeException(sprintf(
-                'Unsupported database driver [%s] for connection [%s]. Supported drivers: mysql, mariadb.',
+                'Unsupported database driver [%s] for connection [%s]. Supported drivers: mysql, mariadb, pgsql.',
                 $driver,
                 $connectionName
             )),
