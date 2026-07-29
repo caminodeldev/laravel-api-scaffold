@@ -52,7 +52,7 @@ class ModelGeneratorTest extends TestCase
 
         $contents = (new ModelGenerator(new StubRenderer(), new PhpArrayRenderer()))->generate($table, $names);
 
-        $this->assertStringContainsString("protected $table = 'public.solicitudes';", $contents);
+        $this->assertStringContainsString('protected $table = \'public.solicitudes\';', $contents);
         $this->assertStringContainsString("'requiere_revision_manual' => 'boolean'", $contents);
         $this->assertStringContainsString("'metadata' => 'array'", $contents);
     }
