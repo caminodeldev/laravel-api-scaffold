@@ -69,7 +69,7 @@ final readonly class ModelGenerator
             'boolean', 'bool' => 'boolean',
             'date' => 'date',
             'datetime', 'timestamp' => 'datetime',
-            'json' => 'array',
+            'json', 'jsonb' => 'array',
             default => null,
         };
     }

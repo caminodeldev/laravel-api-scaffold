@@ -54,4 +54,34 @@ class ServiceGeneratorTest extends TestCase
         $this->assertStringContainsString('$filters[\'per_page\']', $contents);
         $this->assertStringContainsString('$filters[\'perPage\']', $contents);
     }
+
+    public function test_it_generates_safe_query_lists_for_postgres_metadata(): void
+    {
+        config()->set('api-scaffold.security.excluded_columns', []);
+        config()->set('api-scaffold.security.hidden_columns', []);
+
+        $table = new TableDefinition(
+            connection: 'pgsql',
+            driver: 'pgsql',
+            table: 'public.solicitudes',
+            columns: [
+                new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                new ColumnDefinition('uuid', 'uuid', unique: true),
+                new ColumnDefinition('estado', 'enum', allowedValues: ['ingresada', 'cerrada']),
+                new ColumnDefinition('nombre_tramite', 'varchar', length: 180),
+                new ColumnDefinition('metadata', 'json', nullable: true),
+                new ColumnDefinition('created_at', 'timestamp'),
+            ],
+        );
+
+        $names = (new NameResolver())->resolve('public.solicitudes', 'Solicitud');
+
+        $contents = (new ServiceGenerator(new StubRenderer(), new PhpArrayRenderer()))
+            ->generate($table, $names, crud: true, withDelete: false);
+
+        $this->assertStringContainsString("        'uuid',", $contents);
+        $this->assertStringContainsString("        'estado',", $contents);
+        $this->assertStringContainsString("        'nombre_tramite',", $contents);
+        $this->assertStringNotContainsString("        'metadata',", $contents);
+    }
 }

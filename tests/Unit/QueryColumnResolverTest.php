@@ -20,6 +20,7 @@ class QueryColumnResolverTest extends TestCase
             table: 'solicitudes',
             columns: [
                 new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                new ColumnDefinition('uuid', 'uuid', unique: true),
                 new ColumnDefinition('folio', 'varchar', length: 30, unique: true),
                 new ColumnDefinition('estado', 'enum', allowedValues: ['ingresada', 'cerrada']),
                 new ColumnDefinition('metadata', 'json'),
@@ -34,8 +35,8 @@ class QueryColumnResolverTest extends TestCase
             hiddenColumns: [],
         ));
 
-        $this->assertSame(['folio', 'estado'], $resolver->filterable($table));
+        $this->assertSame(['uuid', 'folio', 'estado'], $resolver->filterable($table));
         $this->assertSame(['folio', 'observacion_ciudadana'], $resolver->searchable($table));
-        $this->assertSame(['id', 'folio', 'estado', 'created_at'], $resolver->sortable($table));
+        $this->assertSame(['id', 'uuid', 'folio', 'estado', 'created_at'], $resolver->sortable($table));
     }
 }

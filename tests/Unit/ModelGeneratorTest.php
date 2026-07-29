@@ -34,4 +34,26 @@ class ModelGeneratorTest extends TestCase
         $this->assertStringContainsString("'requiere_revision_manual' => 'boolean'", $contents);
         $this->assertStringContainsString("'dias_habiles_estimados' => 'integer'", $contents);
     }
+
+    public function test_it_handles_postgres_boolean_json_and_schema_qualified_tables(): void
+    {
+        $table = new TableDefinition(
+            connection: 'pgsql',
+            driver: 'pgsql',
+            table: 'public.solicitudes',
+            columns: [
+                new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                new ColumnDefinition('requiere_revision_manual', 'boolean'),
+                new ColumnDefinition('metadata', 'json'),
+            ],
+        );
+
+        $names = (new NameResolver())->resolve('public.solicitudes', 'Solicitud');
+
+        $contents = (new ModelGenerator(new StubRenderer(), new PhpArrayRenderer()))->generate($table, $names);
+
+        $this->assertStringContainsString("protected $table = 'public.solicitudes';", $contents);
+        $this->assertStringContainsString("'requiere_revision_manual' => 'boolean'", $contents);
+        $this->assertStringContainsString("'metadata' => 'array'", $contents);
+    }
 }

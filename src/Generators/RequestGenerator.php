@@ -100,8 +100,9 @@ final readonly class RequestGenerator
             'tinyint' => $column->length === 1 ? 'boolean' : 'integer',
             'decimal', 'double', 'float' => 'numeric',
             'boolean', 'bool' => 'boolean',
+            'uuid' => 'uuid',
             'date' => 'date',
-            'datetime', 'timestamp' => 'date',
+            'datetime', 'timestamp', 'time' => 'date',
             'json' => 'array',
             default => 'string',
         };
