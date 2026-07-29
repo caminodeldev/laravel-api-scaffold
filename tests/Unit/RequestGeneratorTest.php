@@ -51,6 +51,26 @@ class RequestGeneratorTest extends TestCase
         $this->assertStringNotContainsString('unique:solicitudes,folio', $update);
     }
 
+
+    public function test_it_prefixes_connection_for_postgres_schema_qualified_unique_rules(): void
+    {
+        $table = new TableDefinition(
+            connection: 'pgsql',
+            driver: 'pgsql',
+            table: 'public.solicitudes',
+            columns: [
+                new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                new ColumnDefinition('uuid', 'uuid', nullable: false, unique: true),
+            ],
+        );
+
+        $names = (new NameResolver())->resolve('public.solicitudes', 'Solicitud');
+
+        $store = (new RequestGenerator(new StubRenderer()))->generateStore($table, $names);
+
+        $this->assertStringContainsString("'uuid' => ['required', 'uuid', 'unique:pgsql.public.solicitudes,uuid']", $store);
+    }
+
     private function solicitudesTable(): TableDefinition
     {
         return new TableDefinition(

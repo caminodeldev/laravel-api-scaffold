@@ -116,9 +116,18 @@ final readonly class RequestGenerator
         }
 
         if ($includeUnique && $column->unique && ! $column->isPrimaryKey()) {
-            $rules[] = "unique:{$table->table},{$column->name}";
+            $rules[] = 'unique:' . $this->uniqueTableName($table) . ",{$column->name}";
         }
 
         return '[' . implode(', ', array_map(static fn (string $rule): string => "'{$rule}'", $rules)) . ']';
+    }
+
+    private function uniqueTableName(TableDefinition $table): string
+    {
+        if ($table->driver === 'pgsql' && str_contains($table->table, '.')) {
+            return "{$table->connection}.{$table->table}";
+        }
+
+        return $table->table;
     }
 }
