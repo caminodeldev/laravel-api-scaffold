@@ -246,7 +246,22 @@ final readonly class ModelGenerator
 
     private function modelClassFromTable(string $table): string
     {
-        return Str::studly(Str::singular($this->baseTableName($table)));
+        return Str::studly($this->singularBaseTableName($table));
+    }
+
+    private function singularBaseTableName(string $table): string
+    {
+        $baseTable = $this->baseTableName($table);
+
+        if (str_ends_with($baseTable, 'ciones')) {
+            return substr($baseTable, 0, -6) . 'cion';
+        }
+
+        if (str_ends_with($baseTable, 'iones')) {
+            return substr($baseTable, 0, -5) . 'ion';
+        }
+
+        return Str::singular($baseTable);
     }
 
     private function baseTableName(string $table): string

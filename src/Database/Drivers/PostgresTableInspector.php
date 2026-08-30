@@ -8,6 +8,7 @@ use CaminoDelDev\LaravelApiScaffold\Database\ColumnDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\ForeignKeyDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\TableDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\TableInspector;
+use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
 use RuntimeException;
 
@@ -90,8 +91,8 @@ final readonly class PostgresTableInspector implements TableInspector
             driver: 'pgsql',
             table: $resolvedTable,
             columns: $columnDefinitions,
-            foreignKeys: $this->foreignKeys($schema, $tableName, $connectionName),
-            referencedBy: $this->referencedBy($schema, $tableName, $connectionName),
+            foreignKeys: $this->foreignKeys($db, $schema, $tableName),
+            referencedBy: $this->referencedBy($db, $schema, $tableName),
         );
     }
 
@@ -115,9 +116,9 @@ final readonly class PostgresTableInspector implements TableInspector
     /**
      * @return array<int, ForeignKeyDefinition>
      */
-    private function foreignKeys(string $schema, string $table, string $connection): array
+    private function foreignKeys(Connection $db, string $schema, string $table): array
     {
-        $rows = $this->database->connection($connection)->select(
+        $rows = $db->select(
             <<<SQL
             SELECT
                 CON.CONNAME AS constraint_name,
@@ -137,7 +138,7 @@ final readonly class PostgresTableInspector implements TableInspector
             JOIN UNNEST(CON.CONFKEY) WITH ORDINALITY AS TARGET_COLS(ATTNUM, ORD) ON TARGET_COLS.ORD = SOURCE_COLS.ORD
             JOIN PG_ATTRIBUTE SOURCE_ATT ON SOURCE_ATT.ATTRELID = SOURCE.OID AND SOURCE_ATT.ATTNUM = SOURCE_COLS.ATTNUM
             JOIN PG_ATTRIBUTE TARGET_ATT ON TARGET_ATT.ATTRELID = TARGET.OID AND TARGET_ATT.ATTNUM = TARGET_COLS.ATTNUM
-            LEFT JOIN INFORMATION_SCHEMA.COLUMNS COLS
+            LEFT JOIN information_schema.columns COLS
               ON COLS.TABLE_SCHEMA = SOURCE_NS.NSPNAME
              AND COLS.TABLE_NAME = SOURCE.RELNAME
              AND COLS.COLUMN_NAME = SOURCE_ATT.ATTNAME
@@ -166,9 +167,9 @@ final readonly class PostgresTableInspector implements TableInspector
     /**
      * @return array<int, ForeignKeyDefinition>
      */
-    private function referencedBy(string $schema, string $table, string $connection): array
+    private function referencedBy(Connection $db, string $schema, string $table): array
     {
-        $rows = $this->database->connection($connection)->select(
+        $rows = $db->select(
             <<<SQL
             SELECT
                 CON.CONNAME AS constraint_name,
@@ -188,7 +189,7 @@ final readonly class PostgresTableInspector implements TableInspector
             JOIN UNNEST(CON.CONFKEY) WITH ORDINALITY AS TARGET_COLS(ATTNUM, ORD) ON TARGET_COLS.ORD = SOURCE_COLS.ORD
             JOIN PG_ATTRIBUTE SOURCE_ATT ON SOURCE_ATT.ATTRELID = SOURCE.OID AND SOURCE_ATT.ATTNUM = SOURCE_COLS.ATTNUM
             JOIN PG_ATTRIBUTE TARGET_ATT ON TARGET_ATT.ATTRELID = TARGET.OID AND TARGET_ATT.ATTNUM = TARGET_COLS.ATTNUM
-            LEFT JOIN INFORMATION_SCHEMA.COLUMNS COLS
+            LEFT JOIN information_schema.columns COLS
               ON COLS.TABLE_SCHEMA = SOURCE_NS.NSPNAME
              AND COLS.TABLE_NAME = SOURCE.RELNAME
              AND COLS.COLUMN_NAME = SOURCE_ATT.ATTNAME

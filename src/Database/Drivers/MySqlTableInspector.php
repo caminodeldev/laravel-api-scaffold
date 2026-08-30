@@ -8,6 +8,7 @@ use CaminoDelDev\LaravelApiScaffold\Database\ColumnDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\ForeignKeyDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\TableDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\TableInspector;
+use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
 use RuntimeException;
 
@@ -80,8 +81,8 @@ final readonly class MySqlTableInspector implements TableInspector
             driver: 'mysql',
             table: $table,
             columns: $columnDefinitions,
-            foreignKeys: $this->foreignKeys($databaseName, $table, $connectionName),
-            referencedBy: $this->referencedBy($databaseName, $table, $connectionName),
+            foreignKeys: $this->foreignKeys($db, $databaseName, $table),
+            referencedBy: $this->referencedBy($db, $databaseName, $table),
         );
     }
 
@@ -89,9 +90,9 @@ final readonly class MySqlTableInspector implements TableInspector
     /**
      * @return array<int, ForeignKeyDefinition>
      */
-    private function foreignKeys(string $database, string $table, string $connection): array
+    private function foreignKeys(Connection $db, string $database, string $table): array
     {
-        $rows = $this->database->connection($connection)->select(
+        $rows = $db->select(
             <<<SQL
             SELECT
                 KCU.CONSTRAINT_NAME AS constraint_name,
@@ -139,9 +140,9 @@ final readonly class MySqlTableInspector implements TableInspector
     /**
      * @return array<int, ForeignKeyDefinition>
      */
-    private function referencedBy(string $database, string $table, string $connection): array
+    private function referencedBy(Connection $db, string $database, string $table): array
     {
-        $rows = $this->database->connection($connection)->select(
+        $rows = $db->select(
             <<<SQL
             SELECT
                 KCU.CONSTRAINT_NAME AS constraint_name,
