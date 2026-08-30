@@ -116,6 +116,34 @@ class RequestGeneratorTest extends TestCase
         $this->assertStringContainsString("'uuid' => ['required', 'uuid', 'unique:pgsql.public.solicitudes,uuid']", $store);
     }
 
+    public function test_it_generates_in_rule_for_postgres_native_enum_metadata(): void
+    {
+        $table = new TableDefinition(
+            connection: 'pgsql',
+            driver: 'pgsql',
+            table: 'public.solicitudes',
+            columns: [
+                new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                new ColumnDefinition(
+                    name: 'estado',
+                    type: 'enum',
+                    nullable: false,
+                    allowedValues: ['ingresada', 'en_revision', 'cerrada'],
+                ),
+            ],
+        );
+
+        $names = (new NameResolver())->resolve('public.solicitudes', 'Solicitud');
+
+        $store = (new RequestGenerator(new StubRenderer()))->generateStore($table, $names);
+
+        $this->assertStringContainsString(
+            "'estado' => ['required', 'string', 'in:ingresada,en_revision,cerrada']",
+            $store
+        );
+    }
+
+
     private function solicitudesTable(): TableDefinition
     {
         return new TableDefinition(

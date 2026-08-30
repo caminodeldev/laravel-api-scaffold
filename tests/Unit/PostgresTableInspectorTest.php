@@ -152,6 +152,72 @@ class PostgresTableInspectorTest extends TestCase
         $this->assertTrue($table->columns[0]->autoIncrement);
     }
 
+    public function test_it_only_marks_single_column_unique_indexes_as_unique(): void
+    {
+        $columns = [
+            (object) [
+                'name' => 'id',
+                'data_type' => 'bigint',
+                'udt_name' => 'int8',
+                'length_value' => null,
+                'nullable_value' => 'NO',
+                'default_value' => "nextval('solicitudes_id_seq'::regclass)",
+                'identity_value' => 'NO',
+            ],
+            (object) [
+                'name' => 'folio',
+                'data_type' => 'character varying',
+                'udt_name' => 'varchar',
+                'length_value' => 30,
+                'nullable_value' => 'NO',
+                'default_value' => null,
+                'identity_value' => 'NO',
+            ],
+            (object) [
+                'name' => 'codigo_tramite',
+                'data_type' => 'character varying',
+                'udt_name' => 'varchar',
+                'length_value' => 50,
+                'nullable_value' => 'NO',
+                'default_value' => null,
+                'identity_value' => 'NO',
+            ],
+        ];
+
+        $database = $this->createMock(DatabaseManager::class);
+        $connection = $this->createMock(Connection::class);
+
+        $database->method('getDefaultConnection')->willReturn('pgsql');
+        $database->method('connection')->with('pgsql')->willReturn($connection);
+
+        $connection->method('getDriverName')->willReturn('pgsql');
+        $connection->method('select')->willReturnCallback(
+            function (string $query, array $bindings) use ($columns): array {
+                if (str_contains($query, 'INFORMATION_SCHEMA.COLUMNS')) {
+                    return $columns;
+                }
+
+                if (str_contains($query, 'CONSTRAINT_TYPE')) {
+                    return [(object) ['column_name' => 'id']];
+                }
+
+                if (str_contains($query, 'I.INDISUNIQUE')) {
+                    $this->assertStringContainsString("STRING_TO_ARRAY(I.INDKEY::TEXT, ' ')", $query);
+
+                    return [(object) ['column_name' => 'folio']];
+                }
+
+                return [];
+            }
+        );
+
+        $table = (new PostgresTableInspector($database))->inspect('solicitudes');
+
+        $this->assertTrue($table->columns[1]->unique);
+        $this->assertFalse($table->columns[2]->unique);
+    }
+
+
     public function test_it_rejects_non_postgres_connections(): void
     {
         $database = $this->createMock(DatabaseManager::class);
