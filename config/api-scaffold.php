@@ -159,6 +159,34 @@ return [
 
     'query' => [
         'default_sort' => '-id',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Invalid Query Handling
+        |--------------------------------------------------------------------------
+        |
+        | By default, generated index requests remain backward compatible and
+        | invalid filter/sort columns are ignored safely by the generated Service.
+        | Enable these flags when you prefer fail-fast HTTP 422 validation.
+        |
+        */
+
+        'reject_invalid_filters' => false,
+        'reject_invalid_sorts' => false,
+
+        /*
+        |--------------------------------------------------------------------------
+        | Query-only Column Exclusions
+        |--------------------------------------------------------------------------
+        |
+        | These exclusions apply only to generated FILTERABLE, SEARCHABLE and
+        | SORTABLE allow-lists. They are evaluated in addition to security.*
+        | exclusions, which continue to protect fillable arrays and resources.
+        |
+        */
+
+        'excluded_columns' => [],
+        'excluded_patterns' => [],
     ],
 
     /*

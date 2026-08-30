@@ -7,14 +7,19 @@ namespace CaminoDelDev\LaravelApiScaffold\Generators;
 use CaminoDelDev\LaravelApiScaffold\Database\ColumnDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\TableDefinition;
 use CaminoDelDev\LaravelApiScaffold\Security\ColumnSecurity;
+use CaminoDelDev\LaravelApiScaffold\Support\PhpArrayRenderer;
 use CaminoDelDev\LaravelApiScaffold\Support\QueryColumnResolver;
 use CaminoDelDev\LaravelApiScaffold\Support\StubRenderer;
 
 final readonly class RequestGenerator
 {
+    private PhpArrayRenderer $arrayRenderer;
+
     public function __construct(
         private StubRenderer $stubRenderer,
+        ?PhpArrayRenderer $arrayRenderer = null,
     ) {
+        $this->arrayRenderer = $arrayRenderer ?? new PhpArrayRenderer();
     }
 
     /**
@@ -23,7 +28,9 @@ final readonly class RequestGenerator
     public function generateIndex(TableDefinition $table, array $names): string
     {
         $queryColumns = QueryColumnResolver::fromConfig();
-        $filterable = array_flip($queryColumns->filterable($table));
+        $filterableColumns = $queryColumns->filterable($table);
+        $sortableColumns = $queryColumns->sortable($table);
+        $filterable = array_flip($filterableColumns);
         $rules = [];
 
         foreach ($table->columns as $column) {
@@ -41,6 +48,8 @@ final readonly class RequestGenerator
             'class' => $names['indexRequest'],
             'maxPerPage' => (string) config('api-scaffold.pagination.max_per_page', config('api-scaffold.security.max_per_page', 100)),
             'filterRules' => implode(PHP_EOL, $rules),
+            'filterableColumns' => $this->arrayRenderer->stringList($filterableColumns, 8),
+            'sortableColumns' => $this->arrayRenderer->stringList($sortableColumns, 8),
         ]);
     }
 

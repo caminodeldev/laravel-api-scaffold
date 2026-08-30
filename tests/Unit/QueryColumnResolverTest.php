@@ -39,4 +39,31 @@ class QueryColumnResolverTest extends TestCase
         $this->assertSame(['folio', 'observacion_ciudadana'], $resolver->searchable($table));
         $this->assertSame(['id', 'uuid', 'folio', 'estado', 'created_at'], $resolver->sortable($table));
     }
+
+    public function test_it_applies_query_specific_excluded_columns_and_patterns(): void
+    {
+        $table = new TableDefinition(
+            connection: 'mysql',
+            driver: 'mysql',
+            table: 'nominas',
+            columns: [
+                new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                new ColumnDefinition('folio', 'varchar', length: 50),
+                new ColumnDefinition('codigo_verificacion', 'varchar', length: 100),
+                new ColumnDefinition('observacion_interna', 'text'),
+                new ColumnDefinition('estado', 'varchar', length: 50),
+            ],
+        );
+
+        $resolver = new QueryColumnResolver(
+            new ColumnSecurity(excludedColumns: [], hiddenColumns: []),
+            excludedColumns: ['observacion_interna'],
+            excludedPatterns: ['/codigo_.*/'],
+        );
+
+        $this->assertSame(['folio', 'estado'], $resolver->filterable($table));
+        $this->assertSame(['folio', 'estado'], $resolver->searchable($table));
+        $this->assertSame(['id', 'folio', 'estado'], $resolver->sortable($table));
+    }
+
 }

@@ -28,6 +28,12 @@ class RequestGeneratorTest extends TestCase
         $this->assertStringContainsString("'perPage' => ['nullable', 'integer', 'min:1', 'max:50']", $contents);
         $this->assertStringContainsString("'search' => ['nullable', 'string', 'max:255']", $contents);
         $this->assertStringContainsString("'sort' => ['nullable', 'string', 'max:255']", $contents);
+        $this->assertStringContainsString('private const FILTERABLE = [', $contents);
+        $this->assertStringContainsString('private const SORTABLE = [', $contents);
+        $this->assertStringContainsString('reject_invalid_filters', $contents);
+        $this->assertStringContainsString('reject_invalid_sorts', $contents);
+        $this->assertStringContainsString('validateFilterKeys', $contents);
+        $this->assertStringContainsString('validateSortColumns', $contents);
         $this->assertStringContainsString("'estado' => ['sometimes', 'string', 'in:ingresada,cerrada']", $contents);
         $this->assertStringContainsString("'filter.estado' => ['sometimes', 'string', 'in:ingresada,cerrada']", $contents);
         $this->assertStringNotContainsString("'password' =>", $contents);
@@ -143,6 +149,27 @@ class RequestGeneratorTest extends TestCase
         );
     }
 
+
+
+    public function test_it_generates_index_request_strict_validation_allowlists(): void
+    {
+        config()->set('api-scaffold.security.excluded_columns', ['password']);
+        config()->set('api-scaffold.security.hidden_columns', []);
+
+        $table = $this->solicitudesTable();
+        $names = (new NameResolver())->resolve('solicitudes', 'Solicitud');
+
+        $contents = (new RequestGenerator(new StubRenderer()))->generateIndex($table, $names);
+
+        $this->assertStringContainsString("        'uuid',", $contents);
+        $this->assertStringContainsString("        'folio',", $contents);
+        $this->assertStringContainsString("        'estado',", $contents);
+        $this->assertStringContainsString("        'page',", $contents);
+        $this->assertStringContainsString("        'filter',", $contents);
+        $this->assertStringContainsString("The selected filter is not allowed.", $contents);
+        $this->assertStringContainsString('The selected sort column [{$column}] is not allowed.', $contents);
+        $this->assertStringNotContainsString("        'password',", $contents);
+    }
 
     private function solicitudesTable(): TableDefinition
     {

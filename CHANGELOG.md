@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 This project follows semantic versioning once stable releases are published.
 
+## [0.3.2] - 2026-08-30
+
+### Added
+
+- Added optional strict query validation for generated index FormRequests.
+- Added `api-scaffold.query.reject_invalid_filters` to return HTTP 422 for unknown direct or nested filter columns when enabled.
+- Added `api-scaffold.query.reject_invalid_sorts` to return HTTP 422 for unsupported sort columns when enabled.
+- Added query-only `api-scaffold.query.excluded_columns` and `api-scaffold.query.excluded_patterns` settings for generated `FILTERABLE`, `SEARCHABLE` and `SORTABLE` allow-lists.
+
+### Changed
+
+- Generated index FormRequests now include explicit `FILTERABLE` and `SORTABLE` allow-lists used only when strict query validation is enabled.
+- Query allow-list generation can now exclude additional non-secret business columns from filtering, searching and sorting without removing them from generated fillable arrays or API resources.
+- Defaults remain backward compatible: invalid filters and sorts continue to be ignored safely unless strict mode is enabled.
+
+### Documentation
+
+- Documented strict filter/sort validation mode.
+- Documented query-only column and pattern exclusions.
+- Added examples for fail-fast query validation and business-field query exclusions.
+
 ## [0.3.1] - 2026-08-30
 
 ### Fixed

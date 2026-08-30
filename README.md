@@ -31,14 +31,14 @@ This package does not:
 - Create database migrations.
 - Replace policies, gates, middleware or domain validation.
 - Guarantee that generated code is production-ready without review.
-- Support every database engine. `v0.3.1` supports MySQL/MariaDB and PostgreSQL for common Laravel API tables.
+- Support every database engine. `v0.3.2` supports MySQL/MariaDB and PostgreSQL for common Laravel API tables.
 
 ## Release status
 
 Current prepared release:
 
 ```text
-v0.3.1
+v0.3.2
 ```
 
 This release focuses on a safe multi-driver scaffold for MySQL/MariaDB and PostgreSQL, with read-only generation as the recommended default and explicit opt-in flags for write and delete operations.
@@ -344,6 +344,40 @@ private const SORTABLE = [
 ```
 
 Invalid filter or sort columns are ignored by the generated Service instead of being passed blindly to the query builder.
+
+Starting with `v0.3.2`, generated index FormRequests can also reject invalid filters and sorts with HTTP 422. This is opt-in and disabled by default to preserve compatibility:
+
+```php
+'query' => [
+    'default_sort' => '-id',
+    'reject_invalid_filters' => false,
+    'reject_invalid_sorts' => false,
+],
+```
+
+When enabled:
+
+```http
+GET /api/v1/solicitudes?filter[password]=x
+GET /api/v1/solicitudes?sort=password
+```
+
+will fail validation instead of being ignored.
+
+You may also exclude additional business columns from generated query allow-lists without removing them from generated fillable arrays or API resources:
+
+```php
+'query' => [
+    'excluded_columns' => [
+        'observacion_interna',
+    ],
+    'excluded_patterns' => [
+        '/^codigo_/',
+    ],
+],
+```
+
+These query-only exclusions are evaluated in addition to the `security.*` exclusions.
 
 Pagination is configurable:
 
