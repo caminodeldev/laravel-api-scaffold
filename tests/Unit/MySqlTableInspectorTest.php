@@ -36,13 +36,18 @@ class MySqlTableInspectorTest extends TestCase
             ->method('getDatabaseName')
             ->willReturn('testing');
 
-        $connection->expects($this->once())
-            ->method('select')
-            ->with(
-                $this->stringContains('INFORMATION_SCHEMA.COLUMNS'),
-                ['testing', 'users']
-            )
-            ->willReturn($columns);
+        $connection->method('select')->willReturnCallback(
+            function (string $query, array $bindings) use ($columns): array {
+                if (str_contains($query, 'INFORMATION_SCHEMA.COLUMNS')
+                    && str_contains($query, 'COLUMN_NAME AS name')) {
+                    $this->assertSame(['testing', 'users'], $bindings);
+
+                    return $columns;
+                }
+
+                return [];
+            }
+        );
 
         $table = (new MySqlTableInspector($database))->inspect('users');
 
@@ -91,7 +96,16 @@ class MySqlTableInspectorTest extends TestCase
 
         $connection->method('getDriverName')->willReturn('mysql');
         $connection->method('getDatabaseName')->willReturn('tenant');
-        $connection->method('select')->willReturn(require __DIR__ . '/../Fixtures/mysql_users_columns.php');
+        $connection->method('select')->willReturnCallback(
+            static function (string $query): array {
+                if (str_contains($query, 'INFORMATION_SCHEMA.COLUMNS')
+                    && str_contains($query, 'COLUMN_NAME AS name')) {
+                    return require __DIR__ . '/../Fixtures/mysql_users_columns.php';
+                }
+
+                return [];
+            }
+        );
 
         $table = (new MySqlTableInspector($database))->inspect('users', 'tenant_mysql');
 
@@ -155,7 +169,16 @@ class MySqlTableInspectorTest extends TestCase
 
         $connection->method('getDriverName')->willReturn('mysql');
         $connection->method('getDatabaseName')->willReturn('testing');
-        $connection->method('select')->willReturn($columns);
+        $connection->method('select')->willReturnCallback(
+            static function (string $query) use ($columns): array {
+                if (str_contains($query, 'INFORMATION_SCHEMA.COLUMNS')
+                    && str_contains($query, 'COLUMN_NAME AS name')) {
+                    return $columns;
+                }
+
+                return [];
+            }
+        );
 
         $table = (new MySqlTableInspector($database))->inspect('solicitudes');
 
@@ -186,11 +209,100 @@ class MySqlTableInspectorTest extends TestCase
 
         $connection->method('getDriverName')->willReturn('mysql');
         $connection->method('getDatabaseName')->willReturn('testing');
-        $connection->method('select')->willReturn($columns);
+        $connection->method('select')->willReturnCallback(
+            static function (string $query) use ($columns): array {
+                if (str_contains($query, 'INFORMATION_SCHEMA.COLUMNS')
+                    && str_contains($query, 'COLUMN_NAME AS name')) {
+                    return $columns;
+                }
+
+                return [];
+            }
+        );
 
         $table = (new MySqlTableInspector($database))->inspect('solicitudes');
 
         $this->assertSame(1, $table->columns[0]->length);
+    }
+
+    public function test_it_maps_mysql_foreign_keys_and_inverse_references(): void
+    {
+        $columns = [
+            (object) [
+                'name' => 'id',
+                'type' => 'bigint',
+                'column_type' => 'bigint unsigned',
+                'length_value' => null,
+                'nullable_value' => 'NO',
+                'column_key' => 'PRI',
+                'extra_value' => 'auto_increment',
+                'default_value' => null,
+            ],
+            (object) [
+                'name' => 'scaffold_cliente_id',
+                'type' => 'bigint',
+                'column_type' => 'bigint unsigned',
+                'length_value' => null,
+                'nullable_value' => 'NO',
+                'column_key' => 'MUL',
+                'extra_value' => '',
+                'default_value' => null,
+            ],
+        ];
+
+        $database = $this->createMock(DatabaseManager::class);
+        $connection = $this->createMock(Connection::class);
+
+        $database->method('getDefaultConnection')->willReturn('mysql');
+        $database->method('connection')->with('mysql')->willReturn($connection);
+
+        $connection->method('getDriverName')->willReturn('mysql');
+        $connection->method('getDatabaseName')->willReturn('testing');
+        $connection->method('select')->willReturnCallback(
+            static function (string $query) use ($columns): array {
+                if (str_contains($query, 'INFORMATION_SCHEMA.COLUMNS')
+                    && str_contains($query, 'COLUMN_NAME AS name')) {
+                    return $columns;
+                }
+
+                if (str_contains($query, 'KCU.TABLE_NAME = ?')) {
+                    return [
+                        (object) [
+                            'constraint_name' => 'scaffold_transacciones_scaffold_cliente_id_foreign',
+                            'local_table' => 'scaffold_transacciones',
+                            'local_column' => 'scaffold_cliente_id',
+                            'foreign_table' => 'scaffold_clientes',
+                            'foreign_column' => 'id',
+                            'nullable_value' => 'NO',
+                        ],
+                    ];
+                }
+
+                if (str_contains($query, 'KCU.REFERENCED_TABLE_NAME = ?')) {
+                    return [
+                        (object) [
+                            'constraint_name' => 'scaffold_transacciones_scaffold_cliente_id_foreign',
+                            'local_table' => 'scaffold_transacciones',
+                            'local_column' => 'scaffold_cliente_id',
+                            'foreign_table' => 'scaffold_clientes',
+                            'foreign_column' => 'id',
+                            'nullable_value' => 'NO',
+                        ],
+                    ];
+                }
+
+                return [];
+            }
+        );
+
+        $table = (new MySqlTableInspector($database))->inspect('scaffold_transacciones');
+
+        $this->assertCount(1, $table->foreignKeys);
+        $this->assertSame('scaffold_cliente_id', $table->foreignKeys[0]->localColumn);
+        $this->assertSame('scaffold_clientes', $table->foreignKeys[0]->foreignTable);
+        $this->assertSame('id', $table->foreignKeys[0]->foreignColumn);
+
+        $this->assertCount(1, $table->referencedBy);
     }
 
 }

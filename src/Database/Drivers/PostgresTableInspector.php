@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace CaminoDelDev\LaravelApiScaffold\Database\Drivers;
 
 use CaminoDelDev\LaravelApiScaffold\Database\ColumnDefinition;
+use CaminoDelDev\LaravelApiScaffold\Database\ForeignKeyDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\TableDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\TableInspector;
+use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
 use RuntimeException;
 
@@ -61,30 +63,36 @@ final readonly class PostgresTableInspector implements TableInspector
         $primaryColumns = array_flip($this->primaryColumns($schema, $tableName, $connectionName));
         $uniqueColumns = array_flip($this->singleColumnUniqueColumns($schema, $tableName, $connectionName));
 
+        $columnDefinitions = array_map(
+            function (object $column) use ($schema, $connectionName, $primaryColumns, $uniqueColumns): ColumnDefinition {
+                $allowedValues = $this->enumAllowedValues($schema, (string) ($column->udt_name ?? ''), $connectionName);
+                $name = (string) $column->name;
+                $type = $this->normalizedType((string) $column->data_type, (string) ($column->udt_name ?? ''), $allowedValues);
+
+                return new ColumnDefinition(
+                    name: $name,
+                    type: $type,
+                    length: $this->columnLength($column->length_value ?? null),
+                    nullable: strtoupper((string) $column->nullable_value) === 'YES',
+                    primary: array_key_exists($name, $primaryColumns),
+                    autoIncrement: $this->isAutoIncrement($column->default_value ?? null, $column->identity_value ?? null),
+                    unique: array_key_exists($name, $primaryColumns) || array_key_exists($name, $uniqueColumns),
+                    default: $column->default_value,
+                    allowedValues: $allowedValues,
+                );
+            },
+            $columns
+        );
+
+        $resolvedTable = str_contains($table, '.') ? $table : $tableName;
+
         return new TableDefinition(
             connection: $connectionName,
             driver: 'pgsql',
-            table: str_contains($table, '.') ? $table : $tableName,
-            columns: array_map(
-                function (object $column) use ($schema, $connectionName, $primaryColumns, $uniqueColumns): ColumnDefinition {
-                    $allowedValues = $this->enumAllowedValues($schema, (string) ($column->udt_name ?? ''), $connectionName);
-                    $name = (string) $column->name;
-                    $type = $this->normalizedType((string) $column->data_type, (string) ($column->udt_name ?? ''), $allowedValues);
-
-                    return new ColumnDefinition(
-                        name: $name,
-                        type: $type,
-                        length: $this->columnLength($column->length_value ?? null),
-                        nullable: strtoupper((string) $column->nullable_value) === 'YES',
-                        primary: array_key_exists($name, $primaryColumns),
-                        autoIncrement: $this->isAutoIncrement($column->default_value ?? null, $column->identity_value ?? null),
-                        unique: array_key_exists($name, $primaryColumns) || array_key_exists($name, $uniqueColumns),
-                        default: $column->default_value,
-                        allowedValues: $allowedValues,
-                    );
-                },
-                $columns
-            )
+            table: $resolvedTable,
+            columns: $columnDefinitions,
+            foreignKeys: $this->foreignKeys($db, $schema, $tableName),
+            referencedBy: $this->referencedBy($db, $schema, $tableName),
         );
     }
 
@@ -102,6 +110,116 @@ final readonly class PostgresTableInspector implements TableInspector
         }
 
         return [(string) config('api-scaffold.database.default_schema', 'public'), trim($table, ' "')];
+    }
+
+
+    /**
+     * @return array<int, ForeignKeyDefinition>
+     */
+    private function foreignKeys(Connection $db, string $schema, string $table): array
+    {
+        $rows = $db->select(
+            <<<SQL
+            SELECT
+                CON.CONNAME AS constraint_name,
+                SOURCE_NS.NSPNAME AS local_schema,
+                SOURCE.RELNAME AS local_table,
+                SOURCE_ATT.ATTNAME AS local_column,
+                TARGET_NS.NSPNAME AS foreign_schema,
+                TARGET.RELNAME AS foreign_table,
+                TARGET_ATT.ATTNAME AS foreign_column,
+                COLS.IS_NULLABLE AS nullable_value
+            FROM PG_CONSTRAINT CON
+            JOIN PG_CLASS SOURCE ON SOURCE.OID = CON.CONRELID
+            JOIN PG_NAMESPACE SOURCE_NS ON SOURCE_NS.OID = SOURCE.RELNAMESPACE
+            JOIN PG_CLASS TARGET ON TARGET.OID = CON.CONFRELID
+            JOIN PG_NAMESPACE TARGET_NS ON TARGET_NS.OID = TARGET.RELNAMESPACE
+            JOIN UNNEST(CON.CONKEY) WITH ORDINALITY AS SOURCE_COLS(ATTNUM, ORD) ON TRUE
+            JOIN UNNEST(CON.CONFKEY) WITH ORDINALITY AS TARGET_COLS(ATTNUM, ORD) ON TARGET_COLS.ORD = SOURCE_COLS.ORD
+            JOIN PG_ATTRIBUTE SOURCE_ATT ON SOURCE_ATT.ATTRELID = SOURCE.OID AND SOURCE_ATT.ATTNUM = SOURCE_COLS.ATTNUM
+            JOIN PG_ATTRIBUTE TARGET_ATT ON TARGET_ATT.ATTRELID = TARGET.OID AND TARGET_ATT.ATTNUM = TARGET_COLS.ATTNUM
+            LEFT JOIN information_schema.columns COLS
+              ON COLS.TABLE_SCHEMA = SOURCE_NS.NSPNAME
+             AND COLS.TABLE_NAME = SOURCE.RELNAME
+             AND COLS.COLUMN_NAME = SOURCE_ATT.ATTNAME
+            WHERE CON.CONTYPE = 'f'
+              AND SOURCE_NS.NSPNAME = ?
+              AND SOURCE.RELNAME = ?
+              AND ARRAY_LENGTH(CON.CONKEY, 1) = 1
+            ORDER BY CON.CONNAME, SOURCE_COLS.ORD
+            SQL,
+            [$schema, $table]
+        );
+
+        return array_values(array_map(
+            fn (object $row): ForeignKeyDefinition => new ForeignKeyDefinition(
+                name: (string) $row->constraint_name,
+                localTable: $this->schemaQualifiedTable((string) $row->local_schema, (string) $row->local_table),
+                localColumn: (string) $row->local_column,
+                foreignTable: $this->schemaQualifiedTable((string) $row->foreign_schema, (string) $row->foreign_table),
+                foreignColumn: (string) $row->foreign_column,
+                nullable: strtoupper((string) $row->nullable_value) === 'YES',
+            ),
+            $rows
+        ));
+    }
+
+    /**
+     * @return array<int, ForeignKeyDefinition>
+     */
+    private function referencedBy(Connection $db, string $schema, string $table): array
+    {
+        $rows = $db->select(
+            <<<SQL
+            SELECT
+                CON.CONNAME AS constraint_name,
+                SOURCE_NS.NSPNAME AS local_schema,
+                SOURCE.RELNAME AS local_table,
+                SOURCE_ATT.ATTNAME AS local_column,
+                TARGET_NS.NSPNAME AS foreign_schema,
+                TARGET.RELNAME AS foreign_table,
+                TARGET_ATT.ATTNAME AS foreign_column,
+                COLS.IS_NULLABLE AS nullable_value
+            FROM PG_CONSTRAINT CON
+            JOIN PG_CLASS SOURCE ON SOURCE.OID = CON.CONRELID
+            JOIN PG_NAMESPACE SOURCE_NS ON SOURCE_NS.OID = SOURCE.RELNAMESPACE
+            JOIN PG_CLASS TARGET ON TARGET.OID = CON.CONFRELID
+            JOIN PG_NAMESPACE TARGET_NS ON TARGET_NS.OID = TARGET.RELNAMESPACE
+            JOIN UNNEST(CON.CONKEY) WITH ORDINALITY AS SOURCE_COLS(ATTNUM, ORD) ON TRUE
+            JOIN UNNEST(CON.CONFKEY) WITH ORDINALITY AS TARGET_COLS(ATTNUM, ORD) ON TARGET_COLS.ORD = SOURCE_COLS.ORD
+            JOIN PG_ATTRIBUTE SOURCE_ATT ON SOURCE_ATT.ATTRELID = SOURCE.OID AND SOURCE_ATT.ATTNUM = SOURCE_COLS.ATTNUM
+            JOIN PG_ATTRIBUTE TARGET_ATT ON TARGET_ATT.ATTRELID = TARGET.OID AND TARGET_ATT.ATTNUM = TARGET_COLS.ATTNUM
+            LEFT JOIN information_schema.columns COLS
+              ON COLS.TABLE_SCHEMA = SOURCE_NS.NSPNAME
+             AND COLS.TABLE_NAME = SOURCE.RELNAME
+             AND COLS.COLUMN_NAME = SOURCE_ATT.ATTNAME
+            WHERE CON.CONTYPE = 'f'
+              AND TARGET_NS.NSPNAME = ?
+              AND TARGET.RELNAME = ?
+              AND ARRAY_LENGTH(CON.CONKEY, 1) = 1
+            ORDER BY SOURCE.RELNAME, CON.CONNAME, SOURCE_COLS.ORD
+            SQL,
+            [$schema, $table]
+        );
+
+        return array_values(array_map(
+            fn (object $row): ForeignKeyDefinition => new ForeignKeyDefinition(
+                name: (string) $row->constraint_name,
+                localTable: $this->schemaQualifiedTable((string) $row->local_schema, (string) $row->local_table),
+                localColumn: (string) $row->local_column,
+                foreignTable: $this->schemaQualifiedTable((string) $row->foreign_schema, (string) $row->foreign_table),
+                foreignColumn: (string) $row->foreign_column,
+                nullable: strtoupper((string) $row->nullable_value) === 'YES',
+            ),
+            $rows
+        ));
+    }
+
+    private function schemaQualifiedTable(string $schema, string $table): string
+    {
+        $defaultSchema = (string) config('api-scaffold.database.default_schema', 'public');
+
+        return $schema === $defaultSchema ? $table : "{$schema}.{$table}";
     }
 
     /**

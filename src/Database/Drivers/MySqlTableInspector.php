@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace CaminoDelDev\LaravelApiScaffold\Database\Drivers;
 
 use CaminoDelDev\LaravelApiScaffold\Database\ColumnDefinition;
+use CaminoDelDev\LaravelApiScaffold\Database\ForeignKeyDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\TableDefinition;
 use CaminoDelDev\LaravelApiScaffold\Database\TableInspector;
+use Illuminate\Database\Connection;
 use Illuminate\Database\DatabaseManager;
 use RuntimeException;
 
@@ -59,25 +61,129 @@ final readonly class MySqlTableInspector implements TableInspector
             ));
         }
 
+        $columnDefinitions = array_map(
+            fn (object $column): ColumnDefinition => new ColumnDefinition(
+                name: (string) $column->name,
+                type: (string) $column->type,
+                length: $this->columnLength($column->length_value ?? null, $column->column_type ?? null),
+                nullable: strtoupper((string) $column->nullable_value) === 'YES',
+                primary: (string) $column->column_key === 'PRI',
+                autoIncrement: str_contains(strtolower((string) $column->extra_value), 'auto_increment'),
+                unique: in_array((string) $column->column_key, ['UNI', 'PRI'], true),
+                default: $column->default_value,
+                allowedValues: $this->enumAllowedValues($column->column_type ?? null),
+            ),
+            $columns
+        );
+
         return new TableDefinition(
             connection: $connectionName,
             driver: 'mysql',
             table: $table,
-            columns: array_map(
-                fn (object $column): ColumnDefinition => new ColumnDefinition(
-                    name: (string) $column->name,
-                    type: (string) $column->type,
-                    length: $this->columnLength($column->length_value ?? null, $column->column_type ?? null),
-                    nullable: strtoupper((string) $column->nullable_value) === 'YES',
-                    primary: (string) $column->column_key === 'PRI',
-                    autoIncrement: str_contains(strtolower((string) $column->extra_value), 'auto_increment'),
-                    unique: in_array((string) $column->column_key, ['UNI', 'PRI'], true),
-                    default: $column->default_value,
-                    allowedValues: $this->enumAllowedValues($column->column_type ?? null),
-                ),
-                $columns
-            )
+            columns: $columnDefinitions,
+            foreignKeys: $this->foreignKeys($db, $databaseName, $table),
+            referencedBy: $this->referencedBy($db, $databaseName, $table),
         );
+    }
+
+
+    /**
+     * @return array<int, ForeignKeyDefinition>
+     */
+    private function foreignKeys(Connection $db, string $database, string $table): array
+    {
+        $rows = $db->select(
+            <<<SQL
+            SELECT
+                KCU.CONSTRAINT_NAME AS constraint_name,
+                KCU.TABLE_NAME AS local_table,
+                KCU.COLUMN_NAME AS local_column,
+                KCU.REFERENCED_TABLE_NAME AS foreign_table,
+                KCU.REFERENCED_COLUMN_NAME AS foreign_column,
+                C.IS_NULLABLE AS nullable_value
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU
+            JOIN INFORMATION_SCHEMA.COLUMNS C
+              ON C.TABLE_SCHEMA = KCU.TABLE_SCHEMA
+             AND C.TABLE_NAME = KCU.TABLE_NAME
+             AND C.COLUMN_NAME = KCU.COLUMN_NAME
+            WHERE KCU.TABLE_SCHEMA = ?
+              AND KCU.TABLE_NAME = ?
+              AND KCU.REFERENCED_TABLE_NAME IS NOT NULL
+              AND KCU.REFERENCED_COLUMN_NAME IS NOT NULL
+              AND KCU.CONSTRAINT_NAME IN (
+                  SELECT KCU_SINGLE.CONSTRAINT_NAME
+                  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU_SINGLE
+                  WHERE KCU_SINGLE.TABLE_SCHEMA = ?
+                    AND KCU_SINGLE.TABLE_NAME = ?
+                    AND KCU_SINGLE.REFERENCED_TABLE_NAME IS NOT NULL
+                  GROUP BY KCU_SINGLE.CONSTRAINT_NAME
+                  HAVING COUNT(*) = 1
+              )
+            ORDER BY KCU.ORDINAL_POSITION
+            SQL,
+            [$database, $table, $database, $table]
+        );
+
+        return array_values(array_map(
+            static fn (object $row): ForeignKeyDefinition => new ForeignKeyDefinition(
+                name: (string) $row->constraint_name,
+                localTable: (string) $row->local_table,
+                localColumn: (string) $row->local_column,
+                foreignTable: (string) $row->foreign_table,
+                foreignColumn: (string) $row->foreign_column,
+                nullable: strtoupper((string) $row->nullable_value) === 'YES',
+            ),
+            $rows
+        ));
+    }
+
+    /**
+     * @return array<int, ForeignKeyDefinition>
+     */
+    private function referencedBy(Connection $db, string $database, string $table): array
+    {
+        $rows = $db->select(
+            <<<SQL
+            SELECT
+                KCU.CONSTRAINT_NAME AS constraint_name,
+                KCU.TABLE_NAME AS local_table,
+                KCU.COLUMN_NAME AS local_column,
+                KCU.REFERENCED_TABLE_NAME AS foreign_table,
+                KCU.REFERENCED_COLUMN_NAME AS foreign_column,
+                C.IS_NULLABLE AS nullable_value
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU
+            JOIN INFORMATION_SCHEMA.COLUMNS C
+              ON C.TABLE_SCHEMA = KCU.TABLE_SCHEMA
+             AND C.TABLE_NAME = KCU.TABLE_NAME
+             AND C.COLUMN_NAME = KCU.COLUMN_NAME
+            WHERE KCU.TABLE_SCHEMA = ?
+              AND KCU.REFERENCED_TABLE_NAME = ?
+              AND KCU.REFERENCED_COLUMN_NAME IS NOT NULL
+              AND KCU.CONSTRAINT_NAME IN (
+                  SELECT KCU_SINGLE.CONSTRAINT_NAME
+                  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU_SINGLE
+                  WHERE KCU_SINGLE.TABLE_SCHEMA = ?
+                    AND KCU_SINGLE.TABLE_NAME = KCU.TABLE_NAME
+                    AND KCU_SINGLE.REFERENCED_TABLE_NAME = ?
+                  GROUP BY KCU_SINGLE.CONSTRAINT_NAME
+                  HAVING COUNT(*) = 1
+              )
+            ORDER BY KCU.TABLE_NAME, KCU.ORDINAL_POSITION
+            SQL,
+            [$database, $table, $database, $table]
+        );
+
+        return array_values(array_map(
+            static fn (object $row): ForeignKeyDefinition => new ForeignKeyDefinition(
+                name: (string) $row->constraint_name,
+                localTable: (string) $row->local_table,
+                localColumn: (string) $row->local_column,
+                foreignTable: (string) $row->foreign_table,
+                foreignColumn: (string) $row->foreign_column,
+                nullable: strtoupper((string) $row->nullable_value) === 'YES',
+            ),
+            $rows
+        ));
     }
 
     private function columnLength(mixed $lengthValue, mixed $columnType): ?int

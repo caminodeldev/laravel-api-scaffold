@@ -8,12 +8,16 @@ final readonly class TableDefinition
 {
     /**
      * @param array<int, ColumnDefinition> $columns
+     * @param array<int, ForeignKeyDefinition> $foreignKeys
+     * @param array<int, ForeignKeyDefinition> $referencedBy
      */
     public function __construct(
         public string $connection,
         public string $driver,
         public string $table,
         public array $columns,
+        public array $foreignKeys = [],
+        public array $referencedBy = [],
     ) {
     }
 
