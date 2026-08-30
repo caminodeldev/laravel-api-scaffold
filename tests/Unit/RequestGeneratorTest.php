@@ -52,6 +52,51 @@ class RequestGeneratorTest extends TestCase
     }
 
 
+    public function test_it_generates_uuid_rule_for_mysql_uuid_like_string_columns(): void
+    {
+        foreach (['char', 'varchar', 'string'] as $type) {
+            $table = new TableDefinition(
+                connection: 'mysql',
+                driver: 'mysql',
+                table: 'solicitudes',
+                columns: [
+                    new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                    new ColumnDefinition('uuid', $type, length: 36, nullable: false, unique: true),
+                    new ColumnDefinition('folio', 'varchar', length: 30, nullable: false),
+                ],
+            );
+
+            $names = (new NameResolver())->resolve('solicitudes', 'Solicitud');
+
+            $store = (new RequestGenerator(new StubRenderer()))->generateStore($table, $names);
+            $update = (new RequestGenerator(new StubRenderer()))->generateUpdate($table, $names);
+
+            $this->assertStringContainsString("'uuid' => ['required', 'uuid', 'unique:solicitudes,uuid']", $store);
+            $this->assertStringNotContainsString("'uuid' => ['required', 'string', 'max:36'", $store);
+            $this->assertStringContainsString("'uuid' => ['sometimes', 'uuid']", $update);
+        }
+    }
+
+    public function test_it_keeps_regular_char_columns_as_strings(): void
+    {
+        $table = new TableDefinition(
+            connection: 'mysql',
+            driver: 'mysql',
+            table: 'solicitudes',
+            columns: [
+                new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                new ColumnDefinition('tracking_code', 'char', length: 36, nullable: false),
+            ],
+        );
+
+        $names = (new NameResolver())->resolve('solicitudes', 'Solicitud');
+
+        $store = (new RequestGenerator(new StubRenderer()))->generateStore($table, $names);
+
+        $this->assertStringContainsString("'tracking_code' => ['required', 'string', 'max:36']", $store);
+    }
+
+
     public function test_it_prefixes_connection_for_postgres_schema_qualified_unique_rules(): void
     {
         $table = new TableDefinition(
@@ -70,6 +115,34 @@ class RequestGeneratorTest extends TestCase
 
         $this->assertStringContainsString("'uuid' => ['required', 'uuid', 'unique:pgsql.public.solicitudes,uuid']", $store);
     }
+
+    public function test_it_generates_in_rule_for_postgres_native_enum_metadata(): void
+    {
+        $table = new TableDefinition(
+            connection: 'pgsql',
+            driver: 'pgsql',
+            table: 'public.solicitudes',
+            columns: [
+                new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                new ColumnDefinition(
+                    name: 'estado',
+                    type: 'enum',
+                    nullable: false,
+                    allowedValues: ['ingresada', 'en_revision', 'cerrada'],
+                ),
+            ],
+        );
+
+        $names = (new NameResolver())->resolve('public.solicitudes', 'Solicitud');
+
+        $store = (new RequestGenerator(new StubRenderer()))->generateStore($table, $names);
+
+        $this->assertStringContainsString(
+            "'estado' => ['required', 'string', 'in:ingresada,en_revision,cerrada']",
+            $store
+        );
+    }
+
 
     private function solicitudesTable(): TableDefinition
     {

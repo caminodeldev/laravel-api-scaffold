@@ -31,14 +31,14 @@ This package does not:
 - Create database migrations.
 - Replace policies, gates, middleware or domain validation.
 - Guarantee that generated code is production-ready without review.
-- Support every database engine. `v0.3.0` supports MySQL/MariaDB and PostgreSQL for common Laravel API tables.
+- Support every database engine. `v0.3.1` supports MySQL/MariaDB and PostgreSQL for common Laravel API tables.
 
 ## Release status
 
 Current prepared release:
 
 ```text
-v0.3.0
+v0.3.1
 ```
 
 This release focuses on a safe multi-driver scaffold for MySQL/MariaDB and PostgreSQL, with read-only generation as the recommended default and explicit opt-in flags for write and delete operations.
@@ -139,6 +139,19 @@ GET /api/v1/users/{user}
 ```
 
 The `/api` prefix assumes the generated route file is imported from Laravel's `routes/api.php`. If you load the generated route file somewhere else, adjust `routes.prefix` in `config/api-scaffold.php`.
+
+### Laravel Octane / Swoole
+
+When using Laravel Octane or Swoole, reload workers after generating routes or code. The CLI may show new routes immediately while the HTTP worker still serves the old in-memory application.
+
+```bash
+php artisan scaffold:api users --connection=mysql --crud --force
+php artisan optimize:clear
+php artisan octane:reload
+```
+
+The package prints a reminder when Octane is detected. It does not reload workers automatically.
+
 
 ## Generated files
 

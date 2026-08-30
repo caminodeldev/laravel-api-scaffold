@@ -145,7 +145,7 @@ final readonly class PostgresTableInspector implements TableInspector
             WHERE N.NSPNAME = ?
               AND C.RELNAME = ?
               AND I.INDISUNIQUE = TRUE
-              AND ARRAY_LENGTH(I.INDKEY, 1) = 1
+              AND ARRAY_LENGTH(STRING_TO_ARRAY(I.INDKEY::TEXT, ' '), 1) = 1
             SQL,
             [$schema, $table]
         );

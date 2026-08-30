@@ -133,8 +133,20 @@ class ScaffoldApiCommand extends Command
 
         $this->newLine();
         $this->info('API scaffold completed. Review generated authorization, validation and exposed fields before production use.');
+        $this->warnIfOctaneDetected();
 
         return self::SUCCESS;
+    }
+
+
+    private function warnIfOctaneDetected(): void
+    {
+        if (! class_exists(\Laravel\Octane\Octane::class)
+            && ! class_exists(\Laravel\Octane\OctaneServiceProvider::class)) {
+            return;
+        }
+
+        $this->warn('Laravel Octane detected. If you are testing generated routes over HTTP, reload workers: php artisan optimize:clear && php artisan octane:reload');
     }
 
     private function path(string $key, string $file): string

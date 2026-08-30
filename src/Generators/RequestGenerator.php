@@ -95,17 +95,7 @@ final readonly class RequestGenerator
             $rules[] = 'nullable';
         }
 
-        $rules[] = match (strtolower($column->type)) {
-            'bigint', 'int', 'integer', 'mediumint', 'smallint' => 'integer',
-            'tinyint' => $column->length === 1 ? 'boolean' : 'integer',
-            'decimal', 'double', 'float' => 'numeric',
-            'boolean', 'bool' => 'boolean',
-            'uuid' => 'uuid',
-            'date' => 'date',
-            'datetime', 'timestamp', 'time' => 'date',
-            'json' => 'array',
-            default => 'string',
-        };
+        $rules[] = $this->typeRule($column);
 
         if ($column->length !== null && in_array('string', $rules, true)) {
             $rules[] = 'max:' . $column->length;
@@ -120,6 +110,33 @@ final readonly class RequestGenerator
         }
 
         return '[' . implode(', ', array_map(static fn (string $rule): string => "'{$rule}'", $rules)) . ']';
+    }
+
+
+    private function typeRule(ColumnDefinition $column): string
+    {
+        if ($this->isUuidLikeColumn($column)) {
+            return 'uuid';
+        }
+
+        return match (strtolower($column->type)) {
+            'bigint', 'int', 'integer', 'mediumint', 'smallint' => 'integer',
+            'tinyint' => $column->length === 1 ? 'boolean' : 'integer',
+            'decimal', 'double', 'float' => 'numeric',
+            'boolean', 'bool' => 'boolean',
+            'uuid' => 'uuid',
+            'date' => 'date',
+            'datetime', 'timestamp', 'time' => 'date',
+            'json' => 'array',
+            default => 'string',
+        };
+    }
+
+    private function isUuidLikeColumn(ColumnDefinition $column): bool
+    {
+        return $column->name === 'uuid'
+            && $column->length === 36
+            && in_array(strtolower($column->type), ['char', 'varchar', 'string'], true);
     }
 
     private function uniqueTableName(TableDefinition $table): string
