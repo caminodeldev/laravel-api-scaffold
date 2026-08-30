@@ -31,17 +31,17 @@ This package does not:
 - Create database migrations.
 - Replace policies, gates, middleware or domain validation.
 - Guarantee that generated code is production-ready without review.
-- Support every database engine. `v0.3.2` supports MySQL/MariaDB and PostgreSQL for common Laravel API tables.
+- Support every database engine. `v0.4.0` supports MySQL/MariaDB and PostgreSQL for common Laravel API tables.
 
 ## Release status
 
 Current prepared release:
 
 ```text
-v0.3.2
+v0.4.0
 ```
 
-This release focuses on a safe multi-driver scaffold for MySQL/MariaDB and PostgreSQL, with read-only generation as the recommended default and explicit opt-in flags for write and delete operations.
+This release focuses on richer generated Eloquent models for MySQL/MariaDB and PostgreSQL, adding foreign-key relationship generation and PHPDoc metadata while keeping explicit, reviewable code.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for release notes.
 
@@ -227,6 +227,58 @@ php artisan scaffold:model users --connection=mysql --dry-run
 php artisan scaffold:model users --connection=mysql --model=AccountUser
 php artisan scaffold:model users --connection=mysql --force
 ```
+
+
+### Generated model relationships and PHPDoc
+
+Starting in `v0.4.0`, generated models can include Eloquent relationships discovered from database foreign keys.
+
+For a child table with a foreign key such as `scaffold_transacciones.scaffold_cliente_id -> scaffold_clientes.id`, the generated model includes:
+
+```php
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+public function scaffoldCliente(): BelongsTo
+{
+    return $this->belongsTo(ScaffoldCliente::class, 'scaffold_cliente_id', 'id');
+}
+```
+
+When the current table is referenced by another table, the generated model can include inverse `hasMany` relationships:
+
+```php
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+public function scaffoldTransacciones(): HasMany
+{
+    return $this->hasMany(ScaffoldTransaccion::class, 'scaffold_cliente_id', 'id');
+}
+```
+
+Generated models also include PHPDoc for columns and relationships when enabled:
+
+```php
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property Carbon $fecha_alta
+ * @property string $limite_credito
+ *
+ * @property Collection<int, ScaffoldTransaccion> $scaffoldTransacciones
+ */
+```
+
+Configuration:
+
+```php
+'models' => [
+    'generate_relationships' => true,
+    'generate_phpdoc' => true,
+    'phpdoc_decimal_type' => 'string',
+],
+```
+
+Only single-column foreign keys are used for relationship generation. Composite keys, many-to-many and polymorphic relationships are intentionally out of scope.
 
 ### `scaffold:api`
 

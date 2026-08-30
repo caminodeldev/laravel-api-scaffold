@@ -53,6 +53,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Model Generation
+    |--------------------------------------------------------------------------
+    |
+    | Generated models may include Eloquent relationships discovered from
+    | database foreign keys and PHPDoc metadata for IDE/static analysis support.
+    |
+    */
+
+    'models' => [
+        'generate_relationships' => true,
+        'generate_phpdoc' => true,
+        'phpdoc_decimal_type' => 'string',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Generation Defaults
     |--------------------------------------------------------------------------
     |

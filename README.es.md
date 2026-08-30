@@ -38,10 +38,10 @@ Este paquete no:
 Release preparado actualmente:
 
 ```text
-v0.3.2
+v0.4.0
 ```
 
-Este release se enfoca en un scaffold API seguro y multi-driver para MySQL/MariaDB y PostgreSQL, con generación read-only como default recomendado y flags explícitos para escritura y eliminación.
+Este release se enfoca en modelos Eloquent generados más completos para MySQL/MariaDB y PostgreSQL, agregando generación de relaciones por foreign key y metadata PHPDoc sin dejar de producir código explícito y revisable.
 
 Revisa [`CHANGELOG.md`](CHANGELOG.md) para las notas de release.
 
@@ -227,6 +227,58 @@ php artisan scaffold:model users --connection=mysql --dry-run
 php artisan scaffold:model users --connection=mysql --model=AccountUser
 php artisan scaffold:model users --connection=mysql --force
 ```
+
+
+### Relaciones y PHPDoc en modelos generados
+
+Desde `v0.4.0`, los modelos generados pueden incluir relaciones Eloquent detectadas desde foreign keys de base de datos.
+
+Para una tabla hija con una foreign key como `scaffold_transacciones.scaffold_cliente_id -> scaffold_clientes.id`, el modelo generado incluye:
+
+```php
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+public function scaffoldCliente(): BelongsTo
+{
+    return $this->belongsTo(ScaffoldCliente::class, 'scaffold_cliente_id', 'id');
+}
+```
+
+Cuando la tabla actual es referenciada por otra tabla, el modelo generado puede incluir relaciones inversas `hasMany`:
+
+```php
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+public function scaffoldTransacciones(): HasMany
+{
+    return $this->hasMany(ScaffoldTransaccion::class, 'scaffold_cliente_id', 'id');
+}
+```
+
+Los modelos generados también incluyen PHPDoc para columnas y relaciones cuando está habilitado:
+
+```php
+/**
+ * @property int $id
+ * @property string $uuid
+ * @property Carbon $fecha_alta
+ * @property string $limite_credito
+ *
+ * @property Collection<int, ScaffoldTransaccion> $scaffoldTransacciones
+ */
+```
+
+Configuración:
+
+```php
+'models' => [
+    'generate_relationships' => true,
+    'generate_phpdoc' => true,
+    'phpdoc_decimal_type' => 'string',
+],
+```
+
+Solo se usan foreign keys de una columna para generar relaciones. Las claves compuestas, relaciones many-to-many y relaciones polimórficas quedan intencionalmente fuera de alcance.
 
 ### `scaffold:api`
 

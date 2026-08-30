@@ -250,4 +250,96 @@ class PostgresTableInspectorTest extends TestCase
 
         (new PostgresTableInspector($database))->inspect('missing_table');
     }
+    public function test_it_maps_postgres_foreign_keys_and_inverse_references(): void
+    {
+        config()->set('api-scaffold.database.default_schema', 'public');
+
+        $columns = [
+            (object) [
+                'name' => 'id',
+                'data_type' => 'bigint',
+                'udt_name' => 'int8',
+                'length_value' => null,
+                'nullable_value' => 'NO',
+                'default_value' => "nextval('scaffold_transacciones_id_seq'::regclass)",
+                'identity_value' => 'NO',
+            ],
+            (object) [
+                'name' => 'scaffold_cliente_id',
+                'data_type' => 'bigint',
+                'udt_name' => 'int8',
+                'length_value' => null,
+                'nullable_value' => 'NO',
+                'default_value' => null,
+                'identity_value' => 'NO',
+            ],
+        ];
+
+        $database = $this->createMock(DatabaseManager::class);
+        $connection = $this->createMock(Connection::class);
+
+        $database->method('getDefaultConnection')->willReturn('pgsql');
+        $database->method('connection')->with('pgsql')->willReturn($connection);
+
+        $connection->method('getDriverName')->willReturn('pgsql');
+        $connection->method('select')->willReturnCallback(
+            static function (string $query) use ($columns): array {
+                if (str_contains($query, 'INFORMATION_SCHEMA.COLUMNS')) {
+                    return $columns;
+                }
+
+                if (str_contains($query, 'CONSTRAINT_TYPE')) {
+                    return [(object) ['column_name' => 'id']];
+                }
+
+                if (str_contains($query, 'I.INDISUNIQUE')) {
+                    return [];
+                }
+
+                if (str_contains($query, 'CON.CONTYPE =')
+                    && str_contains($query, 'SOURCE_NS.NSPNAME = ?')) {
+                    return [
+                        (object) [
+                            'constraint_name' => 'scaffold_transacciones_scaffold_cliente_id_foreign',
+                            'local_schema' => 'public',
+                            'local_table' => 'scaffold_transacciones',
+                            'local_column' => 'scaffold_cliente_id',
+                            'foreign_schema' => 'public',
+                            'foreign_table' => 'scaffold_clientes',
+                            'foreign_column' => 'id',
+                            'nullable_value' => 'NO',
+                        ],
+                    ];
+                }
+
+                if (str_contains($query, 'CON.CONTYPE =')
+                    && str_contains($query, 'TARGET_NS.NSPNAME = ?')) {
+                    return [
+                        (object) [
+                            'constraint_name' => 'scaffold_transacciones_scaffold_cliente_id_foreign',
+                            'local_schema' => 'public',
+                            'local_table' => 'scaffold_transacciones',
+                            'local_column' => 'scaffold_cliente_id',
+                            'foreign_schema' => 'public',
+                            'foreign_table' => 'scaffold_clientes',
+                            'foreign_column' => 'id',
+                            'nullable_value' => 'NO',
+                        ],
+                    ];
+                }
+
+                return [];
+            }
+        );
+
+        $table = (new PostgresTableInspector($database))->inspect('scaffold_transacciones');
+
+        $this->assertCount(1, $table->foreignKeys);
+        $this->assertSame('scaffold_cliente_id', $table->foreignKeys[0]->localColumn);
+        $this->assertSame('scaffold_clientes', $table->foreignKeys[0]->foreignTable);
+        $this->assertSame('id', $table->foreignKeys[0]->foreignColumn);
+
+        $this->assertCount(1, $table->referencedBy);
+    }
+
 }

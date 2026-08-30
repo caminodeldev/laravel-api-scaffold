@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 This project follows semantic versioning once stable releases are published.
 
+## [0.4.0] - 2026-08-30
+
+### Added
+
+- Added foreign key metadata introspection for MySQL/MariaDB and PostgreSQL table inspectors.
+- Generated models can now include Eloquent `belongsTo` relationships for detected outgoing foreign keys.
+- Generated models can now include inverse `hasMany` relationships when the current table is referenced by other tables.
+- Added model PHPDoc generation for columns and generated relationships to improve IDE/static analysis support.
+- Added `api-scaffold.models.generate_relationships`, `api-scaffold.models.generate_phpdoc` and `api-scaffold.models.phpdoc_decimal_type` configuration options.
+
+### Notes
+
+- Only single-column foreign keys are used for relationship generation.
+- Many-to-many, polymorphic and composite-key relationships are intentionally out of scope.
+- Decimal columns are documented as `string` by default to match Laravel decimal cast behavior.
+
 ## [0.3.2] - 2026-08-30
 
 ### Added
