@@ -5,9 +5,36 @@ declare(strict_types=1);
 namespace {{ namespace }};
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class {{ class }} extends FormRequest
 {
+    /**
+     * @var array<int, string>
+     */
+    private const FILTERABLE = [
+{{ filterableColumns }}
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    private const SORTABLE = [
+{{ sortableColumns }}
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    private const CONTROL_QUERY_KEYS = [
+        'page',
+        'per_page',
+        'perPage',
+        'search',
+        'sort',
+        'filter',
+    ];
+
     public function authorize(): bool
     {
         return true;
@@ -27,5 +54,71 @@ class {{ class }} extends FormRequest
             'filter' => ['nullable', 'array'],
 {{ filterRules }}
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            if ((bool) config('api-scaffold.query.reject_invalid_filters', false)) {
+                $this->validateFilterKeys($validator);
+            }
+
+            if ((bool) config('api-scaffold.query.reject_invalid_sorts', false)) {
+                $this->validateSortColumns($validator);
+            }
+        });
+    }
+
+    private function validateFilterKeys(Validator $validator): void
+    {
+        $allowedFilters = array_flip(self::FILTERABLE);
+        $controlKeys = array_flip(self::CONTROL_QUERY_KEYS);
+
+        foreach (array_keys($this->query()) as $key) {
+            $key = (string) $key;
+
+            if (array_key_exists($key, $controlKeys) || array_key_exists($key, $allowedFilters)) {
+                continue;
+            }
+
+            $validator->errors()->add($key, 'The selected filter is not allowed.');
+        }
+
+        $nestedFilters = $this->query('filter', []);
+
+        if (! is_array($nestedFilters)) {
+            return;
+        }
+
+        foreach (array_keys($nestedFilters) as $key) {
+            $key = (string) $key;
+
+            if (array_key_exists($key, $allowedFilters)) {
+                continue;
+            }
+
+            $validator->errors()->add("filter.{$key}", 'The selected filter is not allowed.');
+        }
+    }
+
+    private function validateSortColumns(Validator $validator): void
+    {
+        $sort = trim((string) $this->query('sort', ''));
+
+        if ($sort === '') {
+            return;
+        }
+
+        $allowedSorts = array_flip(self::SORTABLE);
+
+        foreach (array_filter(array_map('trim', explode(',', $sort))) as $sortColumn) {
+            $column = ltrim($sortColumn, '-');
+
+            if ($column !== '' && array_key_exists($column, $allowedSorts)) {
+                continue;
+            }
+
+            $validator->errors()->add('sort', "The selected sort column [{$column}] is not allowed.");
+        }
     }
 }

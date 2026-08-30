@@ -10,14 +10,24 @@ use CaminoDelDev\LaravelApiScaffold\Security\ColumnSecurity;
 
 final readonly class QueryColumnResolver
 {
+    /**
+     * @param array<int, string> $excludedColumns
+     * @param array<int, string> $excludedPatterns
+     */
     public function __construct(
         private ColumnSecurity $security,
+        private array $excludedColumns = [],
+        private array $excludedPatterns = [],
     ) {
     }
 
     public static function fromConfig(): self
     {
-        return new self(ColumnSecurity::fromConfig());
+        return new self(
+            ColumnSecurity::fromConfig(),
+            config('api-scaffold.query.excluded_columns', []),
+            config('api-scaffold.query.excluded_patterns', []),
+        );
     }
 
     /**
@@ -56,6 +66,7 @@ final readonly class QueryColumnResolver
     private function isSafeExactFilterColumn(ColumnDefinition $column): bool
     {
         return ! $column->autoIncrement
+            && ! $this->isQueryExcluded($column->name)
             && ! $this->security->shouldHide($column->name)
             && in_array(strtolower($column->type), [
                 'bigint',
@@ -81,7 +92,8 @@ final readonly class QueryColumnResolver
 
     private function isSafeSearchColumn(ColumnDefinition $column): bool
     {
-        return ! $this->security->shouldHide($column->name)
+        return ! $this->isQueryExcluded($column->name)
+            && ! $this->security->shouldHide($column->name)
             && in_array(strtolower($column->type), [
                 'char',
                 'varchar',
@@ -94,6 +106,10 @@ final readonly class QueryColumnResolver
 
     private function isSafeSortColumn(ColumnDefinition $column): bool
     {
+        if ($this->isQueryExcluded($column->name)) {
+            return false;
+        }
+
         if ($this->security->shouldHide($column->name) && ! $this->isFrameworkTimestamp($column->name)) {
             return false;
         }
@@ -118,6 +134,43 @@ final readonly class QueryColumnResolver
             'double',
             'float',
         ], true);
+    }
+
+    private function isQueryExcluded(string $column): bool
+    {
+        $normalized = $this->normalizeColumnName($column);
+
+        if (in_array($normalized, $this->normalizedExcludedColumns(), true)) {
+            return true;
+        }
+
+        foreach ($this->excludedPatterns as $pattern) {
+            if (@preg_match($pattern, $normalized) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function normalizedExcludedColumns(): array
+    {
+        return array_map(
+            fn (string $column): string => $this->normalizeColumnName($column),
+            $this->excludedColumns
+        );
+    }
+
+    private function normalizeColumnName(string $column): string
+    {
+        $snakeCase = (string) preg_replace('/(?<!^)[A-Z]/', '_$0', $column);
+        $normalized = strtolower($snakeCase);
+        $normalized = (string) preg_replace('/[^a-z0-9]+/', '_', $normalized);
+
+        return trim($normalized, '_');
     }
 
     private function isFrameworkTimestamp(string $column): bool

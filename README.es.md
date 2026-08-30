@@ -31,14 +31,14 @@ Este paquete no:
 - Crea migraciones de base de datos.
 - Reemplaza policies, gates, middleware ni validaciones de dominio.
 - Garantiza que el código generado esté listo para producción sin revisión.
-- Soporta todos los motores de base de datos. `v0.3.1` soporta MySQL/MariaDB y PostgreSQL para tablas API Laravel comunes.
+- Soporta todos los motores de base de datos. `v0.3.2` soporta MySQL/MariaDB y PostgreSQL para tablas API Laravel comunes.
 
 ## Estado de release
 
 Release preparado actualmente:
 
 ```text
-v0.3.1
+v0.3.2
 ```
 
 Este release se enfoca en un scaffold API seguro y multi-driver para MySQL/MariaDB y PostgreSQL, con generación read-only como default recomendado y flags explícitos para escritura y eliminación.
@@ -344,6 +344,40 @@ private const SORTABLE = [
 ```
 
 Las columnas de filtro u ordenamiento no permitidas se ignoran en el Service generado en vez de pasarse directamente al query builder.
+
+Desde `v0.3.2`, los FormRequests `index` generados también pueden rechazar filtros y ordenamientos inválidos con HTTP 422. Esto es opt-in y está desactivado por defecto para mantener compatibilidad:
+
+```php
+'query' => [
+    'default_sort' => '-id',
+    'reject_invalid_filters' => false,
+    'reject_invalid_sorts' => false,
+],
+```
+
+Cuando está habilitado:
+
+```http
+GET /api/v1/solicitudes?filter[password]=x
+GET /api/v1/solicitudes?sort=password
+```
+
+fallará por validación en vez de ignorarse.
+
+También puedes excluir columnas de negocio adicionales de las allow-lists de consulta generadas sin sacarlas de los fillable arrays ni de los API Resources generados:
+
+```php
+'query' => [
+    'excluded_columns' => [
+        'observacion_interna',
+    ],
+    'excluded_patterns' => [
+        '/^codigo_/',
+    ],
+],
+```
+
+Estas exclusiones específicas de query se evalúan además de las exclusiones `security.*`.
 
 La paginación es configurable:
 

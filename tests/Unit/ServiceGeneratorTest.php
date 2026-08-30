@@ -84,4 +84,36 @@ class ServiceGeneratorTest extends TestCase
         $this->assertStringContainsString("        'nombre_tramite',", $contents);
         $this->assertStringNotContainsString("        'metadata',", $contents);
     }
+
+    public function test_it_respects_query_specific_exclusions_in_generated_allowlists(): void
+    {
+        config()->set('api-scaffold.security.excluded_columns', []);
+        config()->set('api-scaffold.security.hidden_columns', []);
+        config()->set('api-scaffold.query.excluded_columns', ['observacion_interna']);
+        config()->set('api-scaffold.query.excluded_patterns', ['/codigo_.*/']);
+
+        $table = new TableDefinition(
+            connection: 'mysql',
+            driver: 'mysql',
+            table: 'nominas',
+            columns: [
+                new ColumnDefinition('id', 'bigint', primary: true, autoIncrement: true),
+                new ColumnDefinition('folio', 'varchar', length: 50),
+                new ColumnDefinition('codigo_verificacion', 'varchar', length: 100),
+                new ColumnDefinition('observacion_interna', 'text'),
+                new ColumnDefinition('estado', 'varchar', length: 50),
+            ],
+        );
+
+        $names = (new NameResolver())->resolve('nominas', 'Nomina');
+
+        $contents = (new ServiceGenerator(new StubRenderer(), new PhpArrayRenderer()))
+            ->generate($table, $names, crud: true, withDelete: false);
+
+        $this->assertStringContainsString("        'folio',", $contents);
+        $this->assertStringContainsString("        'estado',", $contents);
+        $this->assertStringNotContainsString("        'codigo_verificacion',", $contents);
+        $this->assertStringNotContainsString("        'observacion_interna',", $contents);
+    }
+
 }
