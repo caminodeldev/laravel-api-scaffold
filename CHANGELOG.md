@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 This project follows semantic versioning once stable releases are published.
 
+## [0.3.1] - 2026-08-30
+
+### Fixed
+
+- Generate Laravel `uuid` validation rules for MySQL/MariaDB UUID-like columns named `uuid` with `char(36)`, `varchar(36)` or string metadata.
+- Use a text-safe PostgreSQL `pg_index.indkey` check for single-column unique index detection, avoiding assumptions about `int2vector` array functions.
+
+### Tests
+
+- Added coverage for MySQL UUID-like `char(36)` / `varchar(36)` request validation.
+- Added coverage to keep regular `char(36)` columns as strings.
+- Added coverage for PostgreSQL native enum metadata propagation to generated FormRequest `in:` rules.
+- Added coverage to distinguish PostgreSQL single-column unique indexes from composite unique indexes.
+
+### Documentation
+
+- Documented the need to run `php artisan optimize:clear` and `php artisan octane:reload` after generating routes/code in Laravel Octane or Swoole applications.
+- Added an Octane detection hint after `scaffold:api` generation. The package only prints the reminder and does not reload workers automatically.
+
 ## [0.3.0] - 2026-07-28
 
 ### Added
